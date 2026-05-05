@@ -1,0 +1,8 @@
+{
+  "cycle": "workflow-setup",
+  "url": "http://localhost:1420",
+  "screenshots": [
+    "/home/readm/PeakPick/screenshots/workflow-setup/app-default-desktop.png",
+    "/home/readm/PeakPick/screenshots/workflow-setup/app-default-tablet.png"
+  ]
+}

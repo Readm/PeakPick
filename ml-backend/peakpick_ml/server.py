@@ -7,16 +7,37 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-import torch
 from fastapi import FastAPI, File, UploadFile
 from pydantic import BaseModel
 
+from contextlib import asynccontextmanager
+
 logger = logging.getLogger(__name__)
+
+# Optional ML dependencies — torch is only needed for scoring
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    torch = None
+    TORCH_AVAILABLE = False
+    logger.warning("torch not installed — ML scoring disabled")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize and cleanup ML models + database connections."""
+    device = "cuda" if (TORCH_AVAILABLE and torch.cuda.is_available()) else "cpu"
+    logger.info(f"PeakPick ML backend starting on {device}")
+    yield
+    logger.info("PeakPick ML backend shutting down")
+
 
 app = FastAPI(
     title="PeakPick ML Backend",
     version="0.1.0",
     description="Photo scoring and preference learning API",
+    lifespan=lifespan,
 )
 
 
@@ -52,15 +73,6 @@ class BatchDeleteRequest(BaseModel):
     threshold: float
 
 
-# ── Lifecycle ────────────────────────────────────────────────
-
-@app.on_event("startup")
-async def startup():
-    """Initialize ML models and database connections."""
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    logger.info(f"PeakPick ML backend starting on {device}")
-
-
 # ── Routes ───────────────────────────────────────────────────
 
 @app.get("/health")
@@ -68,8 +80,9 @@ async def health():
     """Health check endpoint."""
     return {
         "status": "ok",
-        "device": "cuda" if torch.cuda.is_available() else "cpu",
-        "cuda_available": torch.cuda.is_available(),
+        "device": "cuda" if (TORCH_AVAILABLE and torch.cuda.is_available()) else "cpu",
+        "cuda_available": TORCH_AVAILABLE and torch.cuda.is_available(),
+        "torch_available": TORCH_AVAILABLE,
     }
 
 
