@@ -1,51 +1,32 @@
 import { create } from "zustand";
 import type { Photo, FilterState, DateRange } from "./types";
+import {
+  fetchPhotos,
+  updateScore as apiUpdateScore,
+  toggleLock as apiToggleLock,
+  updateStatus as apiUpdateStatus,
+  batchDelete as apiBatchDelete,
+  batchUpdateStatus as apiBatchUpdateStatus,
+  healthCheck,
+  PhotoDTO,
+} from "./api";
 
-function mockDates() {
-  const dates: Date[] = [];
-  for (let i = 0; i < 84; i++) {
-    const d = new Date(2026, 0, 1);
-    d.setDate(d.getDate() + Math.floor(Math.random() * 125));
-    dates.push(d);
-  }
-  return dates;
-}
-
-
-
-function generateMockPhotos(): Photo[] {
-  const dates = mockDates();
-  const photos: Photo[] = [];
-  for (let i = 0; i < 84; i++) {
-    const score = Math.min(Math.round((Math.random() * 3.5 + 1) * 10) / 10, 5);
-    const isDismissed = Math.random() > 0.85;
-    const locked = Math.random() > 0.92;
-    photos.push({
-      id: i,
-      filename: `DSC_${String(10023 + i).padStart(5, "0")}.NEF`,
-      filepath: `/photos/${String(10023 + i).padStart(5, "0")}.nef`,
-      score,
-      status: isDismissed ? "dismissed" : "pending",
-      locked,
-      selected: false,
-      group: null,
-      date: dates[i].toISOString().slice(0, 10),
-      dateObj: dates[i],
-      width: 6000,
-      height: 4000,
-      fileSize: 24_300_000,
-    });
-  }
-  photos.sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
-  photos.forEach((p, i) => {
-    p.id = i;
-  });
-  // Give last 6 photos score 5.0
-  for (let i = 0; i < 6; i++) {
-    photos[photos.length - 1 - i].score = 5.0;
-    photos[photos.length - 1 - i].status = "pending";
-  }
-  return photos;
+function dtoToPhoto(dto: PhotoDTO): Photo {
+  return {
+    id: dto.id,
+    filename: dto.filename,
+    filepath: dto.filepath,
+    score: dto.score,
+    status: dto.status,
+    locked: dto.locked,
+    selected: false,
+    group: null,
+    date: dto.date_taken || "",
+    dateObj: dto.date_taken ? new Date(dto.date_taken) : new Date(),
+    width: dto.width || 0,
+    height: dto.height || 0,
+    fileSize: dto.file_size || 0,
+  };
 }
 
 export interface PhotoStore {
@@ -56,20 +37,24 @@ export interface PhotoStore {
   importOpen: boolean;
   detailOpen: boolean;
   top5Open: boolean;
+  loading: boolean;
+  error: string | null;
+  backendConnected: boolean;
 
   // Actions
-  setPhotos: (photos: Photo[]) => void;
-  updateScore: (id: number, newScore: number) => void;
-  toggleLock: (id: number) => void;
-  setStatus: (id: number, status: "pending" | "kept" | "dismissed") => void;
+  initBackend: () => Promise<boolean>;
+  loadPhotos: () => Promise<void>;
+  updateScore: (id: number, newScore: number) => Promise<void>;
+  toggleLock: (id: number) => Promise<void>;
+  setStatus: (id: number, status: "pending" | "kept" | "dismissed") => Promise<void>;
   toggleSelect: (id: number) => void;
   selectAll: () => void;
   clearSelection: () => void;
-  batchDismiss: () => void;
-  batchKeep: () => void;
-  batchToggleLock: () => void;
+  batchDismiss: () => Promise<void>;
+  batchKeep: () => Promise<void>;
+  batchToggleLock: () => Promise<void>;
   selectTop9: () => void;
-  batchDeleteLow: () => void;
+  batchDeleteLow: () => Promise<void>;
   setFilter: (partial: Partial<FilterState>) => void;
   setDateRange: (range: DateRange) => void;
   openDetail: (id: number) => void;
@@ -77,10 +62,11 @@ export interface PhotoStore {
   navigateDetail: (dir: number) => void;
   setImportOpen: (open: boolean) => void;
   toggleTop5: () => void;
+  setError: (error: string | null) => void;
 }
 
-export const usePhotoStore = create<PhotoStore>((set) => ({
-  photos: generateMockPhotos(),
+export const usePhotoStore = create<PhotoStore>((set, get) => ({
+  photos: [],
   filter: {
     mode: "pending",
     scoreThreshold: 1,
@@ -96,29 +82,78 @@ export const usePhotoStore = create<PhotoStore>((set) => ({
   importOpen: false,
   detailOpen: false,
   top5Open: false,
+  loading: false,
+  error: null,
+  backendConnected: false,
 
-  setPhotos: (photos) => set({ photos }),
+  initBackend: async () => {
+    const result = await healthCheck();
+    if ("error" in result) {
+      set({ backendConnected: false });
+      return false;
+    }
+    set({ backendConnected: true });
+    return true;
+  },
 
-  updateScore: (id, newScore) =>
+  loadPhotos: async () => {
+    set({ loading: true, error: null });
+    const params: Record<string, string> = {};
+    const { filter } = get();
+    if (filter.mode !== "all") params.status = filter.mode;
+    if (filter.scoreThreshold > 1) params.score_min = String(filter.scoreThreshold);
+    if (filter.searchQuery) params.search = filter.searchQuery;
+    if (filter.showingLocked) params.locked = "true";
+
+    const result = await fetchPhotos(params);
+    if ("error" in result) {
+      set({ loading: false, error: result.error });
+      return;
+    }
+    set({
+      photos: result.photos.map(dtoToPhoto),
+      loading: false,
+      error: null,
+    });
+  },
+
+  updateScore: async (id, newScore) => {
+    // Optimistic update
     set((state) => ({
       photos: state.photos.map((p) =>
         p.id === id ? { ...p, score: newScore } : p
       ),
-    })),
+    }));
+    const result = await apiUpdateScore(id, newScore);
+    if ("error" in result) {
+      // Revert on failure by reloading
+      get().loadPhotos();
+    }
+  },
 
-  toggleLock: (id) =>
+  toggleLock: async (id) => {
     set((state) => ({
       photos: state.photos.map((p) =>
         p.id === id ? { ...p, locked: !p.locked } : p
       ),
-    })),
+    }));
+    const result = await apiToggleLock(id);
+    if ("error" in result) {
+      get().loadPhotos();
+    }
+  },
 
-  setStatus: (id, status) =>
+  setStatus: async (id, status) => {
     set((state) => ({
       photos: state.photos.map((p) =>
         p.id === id ? { ...p, status } : p
       ),
-    })),
+    }));
+    const result = await apiUpdateStatus(id, status);
+    if ("error" in result) {
+      get().loadPhotos();
+    }
+  },
 
   toggleSelect: (id) =>
     set((state) => ({
@@ -137,26 +172,30 @@ export const usePhotoStore = create<PhotoStore>((set) => ({
       photos: state.photos.map((p) => ({ ...p, selected: false })),
     })),
 
-  batchDismiss: () =>
-    set((state) => ({
-      photos: state.photos.map((p) =>
-        p.selected && !p.locked ? { ...p, status: "dismissed", selected: false } : p
-      ),
-    })),
+  batchDismiss: async () => {
+    const ids = get().photos.filter((p) => p.selected && !p.locked).map((p) => p.id);
+    const result = await apiBatchUpdateStatus(ids, "dismissed");
+    if ("error" in result) {
+      get().loadPhotos();
+      return;
+    }
+    get().loadPhotos();
+  },
 
-  batchKeep: () =>
-    set((state) => ({
-      photos: state.photos.map((p) =>
-        p.selected ? { ...p, status: "kept", selected: false } : p
-      ),
-    })),
+  batchKeep: async () => {
+    const ids = get().photos.filter((p) => p.selected).map((p) => p.id);
+    await apiBatchUpdateStatus(ids, "kept");
+    get().loadPhotos();
+  },
 
-  batchToggleLock: () =>
-    set((state) => ({
-      photos: state.photos.map((p) =>
-        p.selected ? { ...p, locked: !p.locked, selected: false } : p
-      ),
-    })),
+  batchToggleLock: async () => {
+    const selected = get().photos.filter((p) => p.selected);
+    // Toggle each
+    for (const p of selected) {
+      await apiToggleLock(p.id);
+    }
+    get().loadPhotos();
+  },
 
   selectTop9: () =>
     set((state) => {
@@ -172,15 +211,12 @@ export const usePhotoStore = create<PhotoStore>((set) => ({
       };
     }),
 
-  batchDeleteLow: () =>
-    set((state) => {
-      const threshold = state.filter.scoreThreshold;
-      return {
-        photos: state.photos.filter(
-          (p) => !(p.score < threshold && !p.locked && p.status !== "dismissed")
-        ),
-      };
-    }),
+  batchDeleteLow: async () => {
+    const threshold = get().filter.scoreThreshold;
+    const result = await apiBatchDelete(threshold);
+    if ("error" in result) return;
+    get().loadPhotos();
+  },
 
   setFilter: (partial) =>
     set((state) => ({
@@ -210,4 +246,6 @@ export const usePhotoStore = create<PhotoStore>((set) => ({
   setImportOpen: (open) => set({ importOpen: open }),
 
   toggleTop5: () => set((state) => ({ top5Open: !state.top5Open })),
+
+  setError: (error) => set({ error }),
 }));
