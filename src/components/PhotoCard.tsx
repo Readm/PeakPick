@@ -1,8 +1,9 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Check, Lock, Unlock, Layers } from "lucide-react";
 import type { Photo } from "../types";
 import { usePhotoStore } from "../store";
 import { formatScore, getBaseVariants, parseLabel } from "../lib/score";
+import { fetchThumbnail } from "../api";
 
 interface PhotoCardProps {
   photo: Photo;
@@ -23,6 +24,23 @@ export function PhotoCard({ photo, onOpen }: PhotoCardProps) {
   const toggleSelect = usePhotoStore((s) => s.toggleSelect);
   const toggleLock = usePhotoStore((s) => s.toggleLock);
   const updateScore = usePhotoStore((s) => s.updateScore);
+
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const result = await fetchThumbnail(photo.id);
+      if (cancelled) return;
+      if (!("error" in result) && result.thumbnail) {
+        setThumbnailUrl(`data:image/jpeg;base64,${result.thumbnail}`);
+      } else {
+        setLoadError(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [photo.id]);
 
   const bg = hashColor(photo.filepath);
   const label = formatScore(photo.score);
@@ -59,14 +77,23 @@ export function PhotoCard({ photo, onOpen }: PhotoCardProps) {
       className="relative group rounded-lg overflow-hidden border border-border-standard cursor-pointer transition-all duration-150 hover:border-accent/40"
       onClick={handleCardClick}
     >
-      {/* Placeholder image */}
+      {/* Thumbnail or placeholder */}
       <div
-        className="w-full aspect-[3/2] flex items-center justify-center"
-        style={{ backgroundColor: bg }}
+        className="w-full aspect-[3/2] flex items-center justify-center overflow-hidden"
+        style={{ backgroundColor: loadError || !thumbnailUrl ? bg : undefined }}
       >
-        <span className="text-text-quaternary text-xs select-none">
-          {photo.filename}
-        </span>
+        {thumbnailUrl && !loadError ? (
+          <img
+            src={thumbnailUrl}
+            alt={photo.filename}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <span className="text-text-quaternary text-xs select-none">
+            {photo.filename}
+          </span>
+        )}
       </div>
 
       {/* Dismissed overlay */}

@@ -7,6 +7,7 @@ import { Toolbar } from "./components/Toolbar";
 import { ImportOverlay } from "./components/ImportOverlay";
 import { DetailOverlay } from "./components/DetailOverlay";
 import { usePhotoStore } from "./store";
+import { isTauri, startBackend } from "./tauri";
 import "./App.css";
 
 function App() {
@@ -18,6 +19,13 @@ function App() {
 
   useEffect(() => {
     (async () => {
+      // In Tauri, start the Python backend automatically
+      if (isTauri) {
+        await startBackend();
+        // Give it a moment to start
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+
       const connected = await initBackend();
       if (connected) {
         await loadPhotos();

@@ -228,26 +228,9 @@ async function request<T>(
   }
 }
 
-/**
- * Request helper for non-JSON responses (e.g. thumbnail base64 text).
- */
-async function requestText(
-  baseUrl: string,
-  path: string,
-  timeoutMs: number = DEFAULT_TIMEOUT_MS,
-): Promise<ApiResponse<string>> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-  try {
-    const url = buildUrl(baseUrl, path);
-    const response = await fetch(url, {
-      signal: controller.signal,
-    });
 
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
+/**    if (!response.ok) {
       return { error: `HTTP ${response.status}`, code: `HTTP_${response.status}` };
     }
 
@@ -446,8 +429,10 @@ export function fetchMLStatus(
 export function fetchThumbnail(
   id: number,
   baseUrl: string = DEFAULT_BASE_URL,
-): Promise<ApiResponse<string>> {
-  return requestText(baseUrl, `/api/thumbnails/${id}`);
+): Promise<ApiResponse<{ id: number; thumbnail: string }>> {
+  return request<{ id: number; thumbnail: string }>(baseUrl, `/api/thumbnails/${id}`, {
+    method: "GET",
+  });
 }
 
 /**

@@ -1,40 +1,76 @@
 import { useCallback, useState } from "react";
-import { Upload, X, Check } from "lucide-react";
+import { Upload, X, Check, Loader2 } from "lucide-react";
 import { usePhotoStore } from "../store";
+import { selectFolder } from "../tauri";
+import { scanImport, confirmImport } from "../api";
 
 export function ImportOverlay() {
   const importOpen = usePhotoStore((s) => s.importOpen);
   const setImportOpen = usePhotoStore((s) => s.setImportOpen);
+  const loadPhotos = usePhotoStore((s) => s.loadPhotos);
 
-  const [scanned, setScanned] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [selectedPath, setSelectedPath] = useState<string>("");
   const [scanResult, setScanResult] = useState<{
     count: number;
     dateMin: string;
     dateMax: string;
   } | null>(null);
+  const [scannedFiles, setScannedFiles] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleClickDropzone = useCallback(() => {
-    // Simulate scanning
+  const handleClickDropzone = useCallback(async () => {
+    setError(null);
+    const path = await selectFolder();
+    if (!path) return;
+
+    setSelectedPath(path);
+    setScanning(true);
+
+    const result = await scanImport(path);
+    if ("error" in result) {
+      setError(result.error);
+      setScanning(false);
+      return;
+    }
+
     setScanResult({
-      count: 73,
-      dateMin: "2026-01-12",
-      dateMax: "2026-04-28",
+      count: result.count,
+      dateMin: result.date_range?.min || "",
+      dateMax: result.date_range?.max || "",
     });
-    setScanned(true);
+    setScannedFiles(result.files);
+    setScanning(false);
   }, []);
 
   const handleCancel = useCallback(() => {
     setImportOpen(false);
-    setScanned(false);
     setScanResult(null);
+    setScannedFiles([]);
+    setSelectedPath("");
+    setError(null);
   }, [setImportOpen]);
 
-  const handleConfirm = useCallback(() => {
-    // In a real app, this would trigger the actual import
+  const handleConfirm = useCallback(async () => {
+    if (!selectedPath || scannedFiles.length === 0) return;
+    setImporting(true);
+    setError(null);
+
+    const result = await confirmImport(selectedPath, scannedFiles);
+    if ("error" in result) {
+      setError(result.error);
+      setImporting(false);
+      return;
+    }
+
     setImportOpen(false);
-    setScanned(false);
     setScanResult(null);
-  }, [setImportOpen]);
+    setScannedFiles([]);
+    setSelectedPath("");
+    setImporting(false);
+    loadPhotos();
+  }, [selectedPath, scannedFiles, setImportOpen, loadPhotos]);
 
   if (!importOpen) return null;
 
@@ -59,19 +95,35 @@ export function ImportOverlay() {
           {/* Dropzone */}
           <div
             className="flex flex-col items-center justify-center h-40 rounded-lg border-2 border-dashed border-border-standard bg-bg-surface cursor-pointer hover:border-accent/40 hover:bg-bg-elevated transition-all"
-            onClick={handleClickDropzone}
+            onClick={scanning || importing ? undefined : handleClickDropzone}
           >
-            <Upload className="w-10 h-10 text-text-quaternary mb-2" />
-            <span className="text-sm text-text-tertiary">
-              {scanned ? "扫描完成" : "点击选择文件夹"}
-            </span>
-            <span className="text-[11px] text-text-quaternary mt-1">
-              支持 NEF/RAW/JPEG
-            </span>
+            {scanning ? (
+              <>
+                <Loader2 className="w-8 h-8 text-accent animate-spin mb-2" />
+                <span className="text-sm text-text-tertiary">扫描中...</span>
+              </>
+            ) : (
+              <>
+                <Upload className="w-10 h-10 text-text-quaternary mb-2" />
+                <span className="text-sm text-text-tertiary">
+                  {scanResult ? "重新选择文件夹" : "点击选择文件夹"}
+                </span>
+                <span className="text-[11px] text-text-quaternary mt-1">
+                  支持 NEF/RAW/JPEG
+                </span>
+              </>
+            )}
           </div>
 
+          {/* Error */}
+          {error && (
+            <div className="mt-4 p-3 rounded-lg bg-danger/10 border border-danger/30">
+              <span className="text-xs text-danger">{error}</span>
+            </div>
+          )}
+
           {/* Scan results */}
-          {scanned && scanResult && (
+          {scanResult && !error && (
             <div className="mt-4 p-3 rounded-lg bg-bg-surface border border-border-solid">
               <div className="flex items-center gap-2 mb-2">
                 <Check className="w-4 h-4 text-success" />
@@ -106,11 +158,15 @@ export function ImportOverlay() {
             取消
           </button>
           <button
-            className="px-4 py-1.5 rounded-md text-xs font-medium bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            disabled={!scanned}
+            className="px-4 py-1.5 rounded-md text-xs font-medium bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+            disabled={!scanResult || importing || !!error}
             onClick={handleConfirm}
           >
-            确认导入
+            {importing ? (
+              <><Loader2 className="w-3 h-3 animate-spin" /> 导入中...</>
+            ) : (
+              "确认导入"
+            )}
           </button>
         </div>
       </div>

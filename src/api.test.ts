@@ -36,15 +36,7 @@ function jsonResponse(data: unknown, status = 200): Response {
   });
 }
 
-/** Create a mock Response for non-JSON text payloads */
-function textResponse(data: string, status = 200): Response {
-  return new Response(data, {
-    status,
-    headers: { "Content-Type": "text/plain" },
-  });
-}
-
-/** Create a mock error Response */
+/** Create a mock Response object for JSON error responses */
 function errorResponse(
   status: number,
   error: string,
@@ -378,18 +370,18 @@ describe("fetchMLStatus", () => {
 });
 
 describe("fetchThumbnail", () => {
-  it("calls GET /api/thumbnails/{id} and returns base64 string", async () => {
-    const base64 =
-      "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAg";
-    fetchMock.mockResolvedValue(textResponse(base64));
+  it("calls GET /api/thumbnails/{id} and returns object", async () => {
+    const resp = { id: 42, thumbnail: "/9j/4AAQSkZJRg==" };
+    fetchMock.mockResolvedValue(jsonResponse(resp));
 
     const result = await fetchThumbnail(42);
 
     const [url] = fetchMock.mock.calls[0];
     expect(url).toContain("/api/thumbnails/42");
 
-    if (typeof result !== "string") throw new Error("Unexpected error: " + result.error);
-    expect(result).toBe(base64);
+    if ("error" in result) throw new Error("Unexpected error");
+    expect(result.id).toBe(42);
+    expect(result.thumbnail).toBe("/9j/4AAQSkZJRg==");
   });
 
   it("returns error on thumbnail fetch failure", async () => {
