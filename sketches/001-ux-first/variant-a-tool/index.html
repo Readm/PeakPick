@@ -449,12 +449,11 @@ html, body { height: 100%; font-family: 'Inter', system-ui, -apple-system, sans-
 <script>
 // ── Score Distribution ──
 function renderScoreDist() {
-  const counts = {};
-  SCORE_LABELS.forEach(l => counts[l] = 0);
+  const counts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
   const activePhotos = photos.filter(p => p.status !== 'dismissed');
   activePhotos.forEach(p => {
-    const label = formatScore(p.score);
-    if (counts[label] !== undefined) counts[label]++;
+    const base = parseInt(formatScore(p.score));
+    if (counts[base] !== undefined) counts[base]++;
   });
   const maxCount = Math.max(...Object.values(counts), 1);
   const allPhotos = activePhotos.length;
@@ -466,26 +465,25 @@ function renderScoreDist() {
   document.getElementById('score-dist-group-info').textContent =
     `📎 ${groupIds.size} 组相似照片 · 去重算作 ${dedupedCount} 张`;
 
-  document.getElementById('score-dist-bars').innerHTML = SCORE_LABELS.map(label => {
-    const pct = (counts[label] / maxCount) * 100;
-    const currentLabel = formatScore(photos[detailIndex].score);
-    const active = currentLabel === label;
-    const baseScore = parseInt(label);
-    const colorClass = `s-bar-${baseScore}`;
-    return `<div class="score-dist-bar ${active ? 'active' : ''}" onclick="filterToScoreLabel('${label}')">
-      <span class="s-label">${label}</span>
+  document.getElementById('score-dist-bars').innerHTML = [1,2,3,4,5].map(base => {
+    const pct = (counts[base] / maxCount) * 100;
+    const currentBase = parseInt(formatScore(photos[detailIndex].score));
+    const active = currentBase === base;
+    const colorClass = `s-bar-${base}`;
+    return `<div class="score-dist-bar ${active ? 'active' : ''}" onclick="filterToBaseScore(${base})">
+      <span class="s-label">${base}</span>
       <div class="s-bar-wrap"><div class="s-bar ${colorClass}" style="width:${pct}%"></div></div>
-      <span class="s-count">${counts[label]}</span>
+      <span class="s-count">${counts[base]}</span>
     </div>`;
   }).join('');
 }
 
-function filterToScoreLabel(label) {
+function filterToBaseScore(base) {
   document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
   document.querySelector('.filter-chip').classList.add('active');
   currentFilter = 'all'; showingDismissed = false; showingLocked = false;
-  scoreThreshold = parseLabel(label);
-  document.getElementById('threshold-label').textContent = label;
+  scoreThreshold = parseLabel(String(base));
+  document.getElementById('threshold-label').textContent = String(base);
   renderGrid();
 }
 
@@ -498,7 +496,7 @@ function toggleTop5() {
 }
 
 function renderTop5() {
-  const fivers = photos.filter(p => p.score >= 4.7 && p.status !== 'dismissed');
+  const fivers = photos.filter(p => parseInt(formatScore(p.score)) === 5 && p.status !== 'dismissed');
   document.getElementById('top5-section').style.display = fivers.length > 0 ? 'block' : 'none';
   document.getElementById('top5-count').textContent = `${fivers.length}张`;
   document.getElementById('top5-grid').innerHTML = fivers.map(p =>
@@ -529,11 +527,11 @@ function renderGroupInfo() {
       ${groupPhotos.map(gp => {
         const isBest = gp.id === best.id;
         const isCurrent = gp.id === p.id;
-        return `<div onclick="navigateToPhoto(${gp.id})" style="width:40px;height:30px;border-radius:4px;background:${gp.color};cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;color:rgba(255,255,255,0.5);font-weight:600;border:${isCurrent ? '2px solid var(--accent)' : isBest ? '2px solid #c084fc' : '1px solid transparent'};" title="${gp.filename} — ${gp.score.toFixed(1)}分${isBest ? ' (组最佳)' : ''}">${gp.score.toFixed(1)}</div>`;
+        return `<div onclick="navigateToPhoto(${gp.id})" style="width:40px;height:30px;border-radius:4px;background:${gp.color};cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;color:rgba(255,255,255,0.5);font-weight:600;border:${isCurrent ? '2px solid var(--accent)' : isBest ? '2px solid #c084fc' : '1px solid transparent'};" title="${gp.filename} — ${formatScore(gp.score)}分${isBest ? ' (组最佳)' : ''}">${formatScore(gp.score)}</div>`;
       }).join('')}
     </div>
     <div style="font-size:10px;color:var(--text-quaternary);margin-top:4px;">
-      🏆 <strong style="color:#c084fc;">组最佳: ${best.filename}</strong> — ${best.score.toFixed(1)}分
+      🏆 <strong style="color:#c084fc;">组最佳: ${best.filename}</strong> — ${formatScore(best.score)}分
       ${best.id === p.id ? '（当前照片）' : ''}
     </div>
   `;
@@ -596,28 +594,45 @@ const dateMax = new Date(2026, 4, 5);
 const dateRangeMs = dateMax - dateMin;
 
 // ── Score Formatting ──
-// Display: 1, 1+, 2-, 2, 2+, 3-, 3, 3+, 4-, 4, 4+, 5-, 5 (13 levels)
+// 13 evenly-spaced levels across 1.0–5.0:
+// 1, 1+, 2-, 2, 2+, 3-, 3, 3+, 4-, 4, 4+, 5-, 5
+// 2.8 → 3-  (closer to 3 than 2, rounded down)
 function formatScore(val) {
   if (val === undefined || val === null) return '--';
-  const floor = Math.floor(val);
-  const frac = val - floor;
-  if (floor < 1) return `1`;
-  if (floor >= 5) return `5`;
-  if (frac < 0.3) return `${floor}-`;
-  if (frac < 0.7) return `${floor}`;
-  return `${floor}+`;
+  if (val <= 1.166) return '1';
+  if (val <= 1.5)   return '1+';
+  if (val <= 1.833) return '2-';
+  if (val <= 2.166) return '2';
+  if (val <= 2.5)   return '2+';
+  if (val <= 2.833) return '3-';
+  if (val <= 3.166) return '3';
+  if (val <= 3.5)   return '3+';
+  if (val <= 3.833) return '4-';
+  if (val <= 4.166) return '4';
+  if (val <= 4.5)   return '4+';
+  if (val <= 4.833) return '5-';
+  return '5';
 }
 
 function parseLabel(label) {
-  // Reverse: "3+" → 3.7, "3" → 3.3, "3-" → 3.0
+  // Reverse: map label back to center value
   if (label === '--') return 0;
-  const match = label.match(/^(\d)([+-])?$/);
-  if (!match) return 3;
-  const num = parseInt(match[1]);
-  const mod = match[2];
-  if (mod === '+') return num + 0.7;
-  if (mod === '-') return num - 0.3;
-  return num + 0.3; // neutral → slightly above integer
+  const idx = SCORE_LABELS.indexOf(label);
+  if (idx === -1) return 3;
+  const centers = [1.0, 1.333, 1.666, 2.0, 2.333, 2.666, 3.0, 3.333, 3.666, 4.0, 4.333, 4.666, 5.0];
+  return centers[idx];
+}
+
+// Get cycle order for a base number: n → n+ → n- → n
+function getBaseVariants(base) {
+  const all = SCORE_LABELS.filter(l => parseInt(l) === base);
+  const neut = all.find(l => !l.includes('+') && !l.includes('-')) || all[0];
+  const plus = all.find(l => l.includes('+'));
+  const minus = all.find(l => l.includes('-'));
+  const ordered = [neut];
+  if (plus) ordered.push(plus);
+  if (minus) ordered.push(minus);
+  return ordered;
 }
 
 // Labels for display
@@ -733,10 +748,11 @@ function quickDismiss(id) {
 function quickRate(id) {
   const p = photos.find(x => x.id === id);
   if (!p) return;
-  const labels = SCORE_LABELS;
   const current = formatScore(p.score);
-  const idx = labels.indexOf(current);
-  const next = labels[(idx + 1) % labels.length];
+  const base = parseInt(current) || 1;
+  const variants = getBaseVariants(base);
+  const idx = variants.indexOf(current);
+  const next = variants[(idx + 1) % variants.length];
   p.score = parseLabel(next);
   renderGrid();
 }
@@ -950,18 +966,17 @@ function toggleScoreEdit() {
 
 function setScore(val) {
   const p = photos[detailIndex];
-  const labels = SCORE_LABELS;
-  // val is 1-5 from keyboard or star click, map to appropriate label
-  const candidates = labels.filter(l => l.startsWith(String(val)));
   const current = formatScore(p.score);
-  const currentCandidates = candidates.filter(l => l.startsWith(String(val)));
-  // If current starts with same digit, cycle: - → neutral → +
-  if (currentCandidates.length > 1) {
-    const idx = currentCandidates.indexOf(current);
-    const next = currentCandidates[(idx + 1) % currentCandidates.length];
+  const currentBase = parseInt(current) || 1;
+  if (currentBase === val) {
+    // Same base: cycle variants: n → n+ → n- → n
+    const variants = getBaseVariants(val);
+    const idx = variants.indexOf(current);
+    const next = variants[(idx + 1) % variants.length];
     p.score = parseLabel(next);
   } else {
-    p.score = parseLabel(candidates[1] || labels[0]); // default to neutral
+    // New base: go to neutral
+    p.score = parseLabel(String(val));
   }
   showDetail();
   renderGrid();
