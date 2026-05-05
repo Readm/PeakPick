@@ -258,13 +258,13 @@ html, body { height: 100%; font-family: 'Inter', system-ui, -apple-system, sans-
         <span class="icon">📊</span> 全部 <span class="badge">84张</span>
       </div>
       <div class="nav-item" onclick="filterScore('high')">
-        <span class="icon">⭐</span> 高分 (≥4.0) <span class="badge" id="high-count">--</span>
+        <span class="icon">⭐</span> 高分 (4+以上) <span class="badge" id="high-count">--</span>
       </div>
       <div class="nav-item" onclick="filterScore('medium')">
-        <span class="icon">🔶</span> 中等 (2.5-3.9) <span class="badge" id="med-count">--</span>
+        <span class="icon">🔶</span> 中等 (3- ~ 3+) <span class="badge" id="med-count">--</span>
       </div>
       <div class="nav-item" onclick="filterScore('low')">
-        <span class="icon">🔴</span> 低分 (&lt;2.5) <span class="badge" id="low-count">--</span>
+        <span class="icon">🔴</span> 低分 (2+以下) <span class="badge" id="low-count">--</span>
       </div>
       <div class="nav-section">更多</div>
       <div class="nav-item" onclick="showDismissed()">
@@ -293,8 +293,8 @@ html, body { height: 100%; font-family: 'Inter', system-ui, -apple-system, sans-
       <input class="search-input" type="text" placeholder="搜索文件名..." oninput="filterPhotos()">
       <div class="score-filter">
         <span>≥</span>
-        <input type="range" min="1" max="5" step="0.5" value="1" oninput="updateThreshold(this.value)">
-        <span id="threshold-label">1.0</span>
+        <input type="range" min="1" max="5" step="0.1" value="1" oninput="updateThreshold(this.value)">
+        <span id="threshold-label">1</span>
       </div>
       <div style="flex:1;"></div>
       <span class="filter-chip" onclick="toggleFilter(this,'all')">全部</span>
@@ -449,11 +449,12 @@ html, body { height: 100%; font-family: 'Inter', system-ui, -apple-system, sans-
 <script>
 // ── Score Distribution ──
 function renderScoreDist() {
-  const counts = {1:0,2:0,3:0,4:0,5:0};
+  const counts = {};
+  SCORE_LABELS.forEach(l => counts[l] = 0);
   const activePhotos = photos.filter(p => p.status !== 'dismissed');
   activePhotos.forEach(p => {
-    const bin = Math.round(p.score);
-    if (counts[bin] !== undefined) counts[bin]++;
+    const label = formatScore(p.score);
+    if (counts[label] !== undefined) counts[label]++;
   });
   const maxCount = Math.max(...Object.values(counts), 1);
   const allPhotos = activePhotos.length;
@@ -465,25 +466,26 @@ function renderScoreDist() {
   document.getElementById('score-dist-group-info').textContent =
     `📎 ${groupIds.size} 组相似照片 · 去重算作 ${dedupedCount} 张`;
 
-  document.getElementById('score-dist-bars').innerHTML = [5,4,3,2,1].map(score => {
-    const pct = (counts[score] / maxCount) * 100;
-    const active = Math.round(photos[detailIndex].score) === score;
-    return `<div class="score-dist-bar ${active ? 'active' : ''}" onclick="filterToScore(${score})">
-      <span class="s-label">${score}</span>
-      <div class="s-bar-wrap"><div class="s-bar s-bar-${score}" style="width:${pct}%"></div></div>
-      <span class="s-count">${counts[score]}</span>
+  document.getElementById('score-dist-bars').innerHTML = SCORE_LABELS.map(label => {
+    const pct = (counts[label] / maxCount) * 100;
+    const currentLabel = formatScore(photos[detailIndex].score);
+    const active = currentLabel === label;
+    const baseScore = parseInt(label);
+    const colorClass = `s-bar-${baseScore}`;
+    return `<div class="score-dist-bar ${active ? 'active' : ''}" onclick="filterToScoreLabel('${label}')">
+      <span class="s-label">${label}</span>
+      <div class="s-bar-wrap"><div class="s-bar ${colorClass}" style="width:${pct}%"></div></div>
+      <span class="s-count">${counts[label]}</span>
     </div>`;
   }).join('');
 }
 
-function filterToScore(score) {
-  // Switch to 'all' filter and highlight only this score in the grid
+function filterToScoreLabel(label) {
   document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
   document.querySelector('.filter-chip').classList.add('active');
   currentFilter = 'all'; showingDismissed = false; showingLocked = false;
-  scoreThreshold = score;
-  document.getElementById('threshold-label').textContent = score;
-  document.querySelector('.score-filter input').value = score;
+  scoreThreshold = parseLabel(label);
+  document.getElementById('threshold-label').textContent = label;
   renderGrid();
 }
 
@@ -496,7 +498,7 @@ function toggleTop5() {
 }
 
 function renderTop5() {
-  const fivers = photos.filter(p => p.score >= 5.0 && p.status !== 'dismissed');
+  const fivers = photos.filter(p => p.score >= 4.7 && p.status !== 'dismissed');
   document.getElementById('top5-section').style.display = fivers.length > 0 ? 'block' : 'none';
   document.getElementById('top5-count').textContent = `${fivers.length}张`;
   document.getElementById('top5-grid').innerHTML = fivers.map(p =>
@@ -593,6 +595,34 @@ const dateMin = new Date(2026, 0, 1);
 const dateMax = new Date(2026, 4, 5);
 const dateRangeMs = dateMax - dateMin;
 
+// ── Score Formatting ──
+// Display: 1, 1+, 2-, 2, 2+, 3-, 3, 3+, 4-, 4, 4+, 5-, 5 (13 levels)
+function formatScore(val) {
+  if (val === undefined || val === null) return '--';
+  const floor = Math.floor(val);
+  const frac = val - floor;
+  if (floor < 1) return `1`;
+  if (floor >= 5) return `5`;
+  if (frac < 0.3) return `${floor}-`;
+  if (frac < 0.7) return `${floor}`;
+  return `${floor}+`;
+}
+
+function parseLabel(label) {
+  // Reverse: "3+" → 3.7, "3" → 3.3, "3-" → 3.0
+  if (label === '--') return 0;
+  const match = label.match(/^(\d)([+-])?$/);
+  if (!match) return 3;
+  const num = parseInt(match[1]);
+  const mod = match[2];
+  if (mod === '+') return num + 0.7;
+  if (mod === '-') return num - 0.3;
+  return num + 0.3; // neutral → slightly above integer
+}
+
+// Labels for display
+const SCORE_LABELS = ['1','1+','2-','2','2+','3-','3','3+','4-','4','4+','5-','5'];
+
 let detailIndex = 0;
 let currentFilter = 'pending'; // default: hide dismissed
 let scoreThreshold = 1;
@@ -647,7 +677,7 @@ function renderGrid() {
       ${p.group && p.group.isHighest ? '<div class="grouped-badge" style="background:rgba(147,51,234,0.6);color:#fff;">⭐ 组最佳</div>' : ''}
       ${p.status === 'kept' ? '<div style="position:absolute;top:58px;right:8px;"><span class="badge badge-green">⭐ 保留</span></div>' : ''}
       <div class="photo-overlay">
-        <span class="photo-score ${scoreClass}" onclick="event.stopPropagation();quickRate(${p.id})" title="点击修改评分"><span class="value">${p.score.toFixed(1)}</span></span>
+        <span class="photo-score ${scoreClass}" onclick="event.stopPropagation();quickRate(${p.id})" title="点击修改评分"><span class="value">${formatScore(p.score)}</span></span>
       </div>
     </div>`;
   }).join('');
@@ -666,7 +696,7 @@ function updateStatus(visibleCount = null) {
   document.getElementById('status-active').textContent = `${active} 活跃`;
   document.getElementById('status-dismissed').textContent = `${dismissed} 已忽略`;
   document.getElementById('status-locked').textContent = `${locked} 已锁定`;
-  document.getElementById('status-avg').textContent = `均分 ${avg}`;
+  document.getElementById('status-avg').textContent = `均分 ${formatScore(avg)}`;
   document.getElementById('selected-count').textContent = `已选 ${selected} 张`;
   document.getElementById('dismissed-count').textContent = `${dismissed}张`;
   document.getElementById('locked-count').textContent = `${locked}张`;
@@ -703,9 +733,11 @@ function quickDismiss(id) {
 function quickRate(id) {
   const p = photos.find(x => x.id === id);
   if (!p) return;
-  const stars = Math.round(p.score);
-  const newScore = stars >= 5 ? 1 : stars + 1;
-  p.score = newScore;
+  const labels = SCORE_LABELS;
+  const current = formatScore(p.score);
+  const idx = labels.indexOf(current);
+  const next = labels[(idx + 1) % labels.length];
+  p.score = parseLabel(next);
   renderGrid();
 }
 
@@ -778,7 +810,7 @@ function showLocked() { showingLocked = true; showingDismissed = false; document
 
 function updateThreshold(val) {
   scoreThreshold = parseFloat(val);
-  document.getElementById('threshold-label').textContent = val;
+  document.getElementById('threshold-label').textContent = formatScore(scoreThreshold);
   renderGrid();
 }
 
@@ -866,7 +898,7 @@ function showDetail() {
   document.getElementById('detail-res').textContent = p.res;
   document.getElementById('detail-size').textContent = p.size;
   document.getElementById('detail-status').textContent = p.locked ? '🔒 已锁定' : (p.status === 'pending' ? '待处理' : (p.status === 'kept' ? '⭐ 保留' : '🙈 已忽略'));
-  document.getElementById('detail-ai-score').textContent = p.score.toFixed(1);
+  document.getElementById('detail-ai-score').textContent = formatScore(p.score);
   document.getElementById('detail-lock-badge').classList.toggle('hidden', !p.locked);
   document.getElementById('detail-lock-btn').textContent = p.locked ? '🔓 解锁' : '🔒 锁定（保护不被删除）';
   document.getElementById('detail-image').style.background = p.color;
@@ -887,10 +919,28 @@ function showDetail() {
 }
 
 function updateScoreStars(score) {
-  const stars = Math.round(score);
+  const label = formatScore(score);
+  const baseScore = parseInt(label) || 1;
+  const hasPlus = label.includes('+');
+  const hasMinus = label.includes('-');
   document.querySelectorAll('#score-edit .star').forEach(s => {
-    s.classList.toggle('active', parseInt(s.dataset.s) <= stars);
+    const sVal = parseInt(s.dataset.s);
+    s.classList.toggle('active', sVal < baseScore || (sVal === baseScore && !hasMinus));
   });
+  // Add modifier indicators
+  const starsContainer = document.getElementById('score-edit');
+  let modText = '';
+  if (hasMinus) modText = '−';
+  else if (hasPlus) modText = '+';
+  const existingMod = starsContainer.querySelector('.mod-indicator');
+  if (existingMod) existingMod.remove();
+  if (modText) {
+    const el = document.createElement('span');
+    el.className = 'mod-indicator';
+    el.style.cssText = 'font-size:12px;color:var(--text-tertiary);margin-left:4px;';
+    el.textContent = `（${modText}）`;
+    starsContainer.querySelector('.hint').before(el);
+  }
 }
 
 function toggleScoreEdit() {
@@ -900,10 +950,21 @@ function toggleScoreEdit() {
 
 function setScore(val) {
   const p = photos[detailIndex];
-  p.score = val;
+  const labels = SCORE_LABELS;
+  // val is 1-5 from keyboard or star click, map to appropriate label
+  const candidates = labels.filter(l => l.startsWith(String(val)));
+  const current = formatScore(p.score);
+  const currentCandidates = candidates.filter(l => l.startsWith(String(val)));
+  // If current starts with same digit, cycle: - → neutral → +
+  if (currentCandidates.length > 1) {
+    const idx = currentCandidates.indexOf(current);
+    const next = currentCandidates[(idx + 1) % currentCandidates.length];
+    p.score = parseLabel(next);
+  } else {
+    p.score = parseLabel(candidates[1] || labels[0]); // default to neutral
+  }
   showDetail();
   renderGrid();
-  // Feedback is immediate — no button needed
 }
 
 function navigateDetail(dir) {
