@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PeakPick — Tool Variant</title>
+<title>PeakPick — Tool v2</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -13,60 +13,63 @@
   --text-tertiary: #8a8f98; --text-quaternary: #62666d;
   --accent: #5e6ad2; --accent-hover: #828fff; --accent-violet: #7170ff;
   --border-subtle: rgba(255,255,255,0.05); --border-standard: rgba(255,255,255,0.08);
-  --border-solid: #23252a; --success: #10b981; --danger: #ef4444;
+  --border-solid: #23252a; --success: #10b981; --danger: #ef4444; --warning: #eab308;
   --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px;
   --sidebar-w: 260px; --toolbar-h: 48px;
 }
 html, body { height: 100%; font-family: 'Inter', system-ui, -apple-system, sans-serif; font-feature-settings: 'cv01', 'ss03'; background: var(--bg-deep); color: var(--text-primary); }
-
-/* ── Layout ── */
 .app { display: flex; height: 100vh; }
-.sidebar { width: var(--sidebar-w); background: var(--bg-panel); border-right: 1px solid var(--border-subtle); display: flex; flex-direction: column; flex-shrink: 0; }
+.sidebar { width: var(--sidebar-w); background: var(--bg-panel); border-right: 1px solid var(--border-subtle); display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
 .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .content { flex: 1; overflow-y: auto; padding: 16px; }
 .toolbar { height: var(--toolbar-h); background: var(--bg-panel); border-top: 1px solid var(--border-subtle); display: flex; align-items: center; padding: 0 16px; gap: 8px; flex-shrink: 0; }
 
-/* ── Sidebar ── */
-.sidebar-header { padding: 16px; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 10px; }
+/* Sidebar */
+.sidebar-header { padding: 16px; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .sidebar-header .logo { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
 .sidebar-header h1 { font-size: 16px; font-weight: 510; letter-spacing: -0.288px; }
-.sidebar-nav { padding: 8px; flex: 1; }
+.sidebar-nav { padding: 8px; }
 .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-md); color: var(--text-secondary); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.1s; }
 .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text-primary); }
 .nav-item.active { background: rgba(255,255,255,0.06); color: var(--text-primary); }
 .nav-item .icon { width: 18px; text-align: center; opacity: 0.7; }
+.nav-item .badge { margin-left: auto; font-size: 11px; color: var(--text-quaternary); }
 .nav-section { padding: 12px 10px 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-quaternary); }
 
-/* ── Date Filter ── */
+/* Date Range Slider */
 .date-filter { padding: 8px 10px; }
 .date-filter label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-quaternary); margin-bottom: 6px; }
-.date-inputs { display: flex; gap: 6px; align-items: center; }
-.date-inputs input { flex: 1; background: rgba(255,255,255,0.04); border: 1px solid var(--border-standard); border-radius: var(--radius-md); padding: 6px 8px; color: var(--text-primary); font-size: 12px; font-family: inherit; }
-.date-inputs input:focus { outline: none; border-color: var(--accent); }
+.date-display { text-align: center; font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; padding: 4px; background: rgba(255,255,255,0.04); border-radius: var(--radius-md); }
+.range-slider-wrap { position: relative; height: 36px; margin-bottom: 8px; }
+.range-slider-wrap input[type=range] { position: absolute; width: 100%; top: 12px; -webkit-appearance: none; appearance: none; height: 3px; background: var(--border-solid); border-radius: 2px; pointer-events: none; }
+.range-slider-wrap input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; pointer-events: auto; border: 2px solid var(--bg-panel); }
+.range-slider-wrap input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; pointer-events: auto; border: 2px solid var(--bg-panel); }
+.range-fill { position: absolute; top: 12px; height: 3px; background: var(--accent); border-radius: 2px; pointer-events: none; }
 .date-presets { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
-.date-preset { padding: 3px 8px; border-radius: 9999px; font-size: 11px; font-weight: 500; color: var(--text-tertiary); background: transparent; border: 1px solid var(--border-solid); cursor: pointer; transition: all 0.1s; }
+.date-preset { padding: 3px 8px; border-radius: 9999px; font-size: 11px; font-weight: 500; color: var(--text-tertiary); background: transparent; border: 1px solid var(--border-solid); cursor: pointer; transition: all 0.1s; font-family: inherit; }
 .date-preset:hover { background: rgba(255,255,255,0.04); color: var(--text-primary); }
 .date-preset.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.date-timeline { position: relative; height: 20px; margin: 4px 0 8px; display: flex; align-items: center; }
+.date-tick { flex: 1; height: 2px; background: var(--border-solid); position: relative; }
+.date-tick.active { background: var(--accent); }
+.date-tick-label { font-size: 9px; color: var(--text-quaternary); position: absolute; top: 4px; transform: translateX(-50%); white-space: nowrap; }
 
-/* ── Import Overlay ── */
+/* Import Overlay */
 .import-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; }
 .import-overlay.open { display: flex; }
 .import-dialog { background: var(--bg-surface); border: 1px solid var(--border-standard); border-radius: 12px; width: 560px; max-width: 90vw; padding: 24px; box-shadow: 0 0 0 1px rgba(0,0,0,0.2); }
 .import-dialog h2 { font-size: 20px; font-weight: 590; letter-spacing: -0.24px; margin-bottom: 4px; }
 .import-dialog p { font-size: 14px; color: var(--text-tertiary); margin-bottom: 20px; }
 .import-dropzone { border: 2px dashed var(--border-standard); border-radius: var(--radius-lg); padding: 40px; text-align: center; margin-bottom: 16px; cursor: pointer; transition: border-color 0.2s; }
-.import-dropzone:hover { border-color: var(--accent); }
+.import-dropzone:hover { border-color: var(--accent); background: rgba(94,106,210,0.04); }
 .import-dropzone .icon { font-size: 32px; margin-bottom: 8px; }
 .import-dropzone p { font-size: 14px; color: var(--text-secondary); margin-bottom: 4px; }
 .import-dropzone .sub { font-size: 12px; color: var(--text-quaternary); }
-.import-row { display: flex; gap: 12px; margin-bottom: 16px; }
-.import-field { flex: 1; }
-.import-field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-quaternary); margin-bottom: 4px; }
-.import-field input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border-standard); border-radius: var(--radius-md); padding: 8px; color: var(--text-primary); font-size: 13px; font-family: inherit; }
+.import-summary { background: rgba(255,255,255,0.03); border-radius: var(--radius-lg); padding: 12px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); display: flex; justify-content: space-between; }
 .import-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
-/* ── Buttons ── */
-.btn { padding: 6px 14px; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; font-family: inherit; border: none; cursor: pointer; transition: all 0.1s; }
+/* Buttons */
+.btn { padding: 6px 14px; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; font-family: inherit; border: none; cursor: pointer; transition: all 0.1s; white-space: nowrap; }
 .btn-primary { background: var(--accent); color: #fff; }
 .btn-primary:hover { background: var(--accent-hover); }
 .btn-ghost { background: rgba(255,255,255,0.03); color: var(--text-secondary); border: 1px solid var(--border-standard); }
@@ -75,221 +78,228 @@ html, body { height: 100%; font-family: 'Inter', system-ui, -apple-system, sans-
 .btn-danger:hover { background: #dc2626; }
 .btn-sm { padding: 4px 10px; font-size: 12px; }
 
-/* ── Header Bar ── */
-.header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); }
+/* Header */
+.header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; }
 .header-left { display: flex; align-items: center; gap: 12px; }
 .header-left h2 { font-size: 16px; font-weight: 510; }
 .folder-badge { padding: 3px 10px; border-radius: 9999px; font-size: 11px; color: var(--text-tertiary); background: rgba(255,255,255,0.04); border: 1px solid var(--border-solid); }
 .header-right { display: flex; align-items: center; gap: 8px; }
 
-/* ── Search / Filter Bar ── */
-.filter-bar { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--border-subtle); }
-.search-input { flex: 1; max-width: 280px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-standard); border-radius: var(--radius-md); padding: 6px 10px; color: var(--text-primary); font-size: 13px; font-family: inherit; }
+/* Filter Bar */
+.filter-bar { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; }
+.search-input { flex: 1; max-width: 240px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-standard); border-radius: var(--radius-md); padding: 6px 10px; color: var(--text-primary); font-size: 13px; font-family: inherit; }
 .search-input::placeholder { color: var(--text-quaternary); }
 .search-input:focus { outline: none; border-color: var(--accent); }
 .score-filter { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-tertiary); }
-.score-filter input[type=range] { width: 100px; accent-color: var(--accent); }
-.filter-chip { padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 500; background: rgba(255,255,255,0.04); border: 1px solid var(--border-solid); color: var(--text-tertiary); cursor: pointer; }
+.score-filter input[type=range] { width: 80px; accent-color: var(--accent); }
+.filter-chip { padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 500; background: rgba(255,255,255,0.04); border: 1px solid var(--border-solid); color: var(--text-tertiary); cursor: pointer; font-family: inherit; transition: all 0.1s; }
 .filter-chip:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
 .filter-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-.filter-chip.danger { border-color: rgba(239, 68, 68, 0.3); color: var(--danger); }
-.filter-chip.danger.active { background: var(--danger); border-color: var(--danger); color: #fff; }
+.filter-chip.warning { border-color: rgba(234,179,8,0.3); color: var(--warning); }
+.filter-chip.warning.active { background: var(--warning); border-color: var(--warning); color: #000; }
 
-/* ── Photo Grid ── */
+/* Photo Grid */
 .photo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .photo-card { position: relative; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-surface); border: 1px solid var(--border-standard); cursor: pointer; transition: all 0.15s; aspect-ratio: 3/2; }
 .photo-card:hover { border-color: var(--accent); transform: translateY(-1px); }
-.photo-card.dismissed { opacity: 0.4; }
-.photo-card.dismissed::after { content: '已忽略'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.7); color: var(--text-secondary); padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 500; }
+.photo-card.dismissed { opacity: 0.35; }
+.photo-card.dismissed::after { content: '忽略'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.7); color: var(--text-secondary); padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 500; }
 .photo-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .photo-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 8px; background: linear-gradient(transparent, rgba(0,0,0,0.7)); display: flex; justify-content: space-between; align-items: flex-end; }
-.photo-score { font-size: 13px; font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+.photo-score { font-size: 13px; font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); cursor: pointer; padding: 1px 4px; border-radius: 3px; transition: background 0.1s; }
+.photo-score:hover { background: rgba(255,255,255,0.15); }
 .photo-score .value { display: inline-block; }
 .photo-score.high .value { color: var(--success); }
-.photo-score.medium .value { color: #eab308; }
+.photo-score.medium .value { color: var(--warning); }
 .photo-score.low .value { color: var(--danger); }
 .photo-check { position: absolute; top: 8px; left: 8px; width: 20px; height: 20px; border-radius: 4px; border: 2px solid rgba(255,255,255,0.5); background: rgba(0,0,0,0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.1s; }
 .photo-check:hover { border-color: #fff; background: rgba(0,0,0,0.5); }
 .photo-check.checked { background: var(--accent); border-color: var(--accent); }
 .photo-check.checked::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; }
-.photo-dismiss-btn { position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border-radius: 50%; border: none; background: rgba(0,0,0,0.4); color: rgba(255,255,255,0.7); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; }
-.photo-card:hover .photo-dismiss-btn { opacity: 1; }
-.photo-dismiss-btn:hover { background: rgba(0,0,0,0.7); color: #fff; }
+.photo-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+.photo-card:hover .photo-actions { opacity: 1; }
+.photo-action-btn { width: 22px; height: 22px; border-radius: 50%; border: none; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); color: rgba(255,255,255,0.7); transition: all 0.1s; }
+.photo-action-btn:hover { background: rgba(0,0,0,0.7); color: #fff; }
+.photo-action-btn.locked { background: rgba(234,179,8,0.4); color: var(--warning); }
+.photo-lock-badge { position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; border-radius: 4px; background: rgba(234,179,8,0.3); color: var(--warning); display: none; align-items: center; justify-content: center; font-size: 11px; }
 
-/* ── Toolbar ── */
+/* Toolbar */
 .toolbar-left { display: flex; align-items: center; gap: 8px; }
-.toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-quaternary); }
+.toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-quaternary); flex-shrink: 0; }
 .toolbar .sep { width: 1px; height: 20px; background: var(--border-standard); }
-.toolbar .count { font-size: 12px; color: var(--text-tertiary); }
+.toolbar .count { font-size: 12px; color: var(--text-tertiary); white-space: nowrap; }
 
-/* ── Detail View ── */
+/* Detail View */
 .detail-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 200; flex-direction: column; }
 .detail-overlay.open { display: flex; }
-.detail-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); }
-.detail-header h3 { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
+.detail-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; }
+.detail-header-left { display: flex; align-items: center; gap: 12px; }
+.detail-header-left h3 { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
+.detail-header-right { display: flex; align-items: center; gap: 8px; }
 .detail-close { width: 32px; height: 32px; border-radius: var(--radius-md); border: none; background: rgba(255,255,255,0.04); color: var(--text-secondary); cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
 .detail-close:hover { background: rgba(255,255,255,0.08); }
-.detail-body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; gap: 24px; }
-.detail-image { max-width: 70%; max-height: 80vh; border-radius: var(--radius-lg); }
+.detail-body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; gap: 24px; min-height: 0; }
+.detail-image { max-width: 65%; max-height: 80vh; border-radius: var(--radius-lg); object-fit: contain; }
 .detail-sidebar { width: 280px; flex-shrink: 0; }
-.detail-sidebar h4 { font-size: 14px; font-weight: 500; color: var(--text-tertiary); margin-bottom: 12px; }
+.detail-sidebar h4 { font-size: 13px; font-weight: 500; color: var(--text-quaternary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
 
-/* ── Star Rating ── */
-.stars { display: flex; gap: 4px; margin-bottom: 16px; }
-.star { width: 28px; height: 28px; cursor: pointer; color: var(--text-quaternary); transition: color 0.1s; }
-.star.active { color: #eab308; }
-.star:hover { color: #facc15; }
-.star-label { font-size: 12px; color: var(--text-tertiary); }
+/* Score in detail - clickable */
+.score-display { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: var(--radius-lg); cursor: pointer; transition: background 0.1s; }
+.score-display:hover { background: rgba(255,255,255,0.06); }
+.score-display .ai-label { font-size: 11px; color: var(--text-quaternary); }
+.score-display .ai-value { font-size: 28px; font-weight: 700; color: var(--text-primary); line-height: 1; }
+.score-display .ai-unit { font-size: 14px; color: var(--text-tertiary); }
+.score-display .edit-hint { font-size: 11px; color: var(--text-quaternary); margin-left: auto; }
+.score-edit { display: none; align-items: center; gap: 8px; margin-bottom: 16px; }
+.score-edit.open { display: flex; }
+.score-edit .star { font-size: 24px; cursor: pointer; color: var(--text-quaternary); transition: color 0.1s; }
+.score-edit .star.active { color: var(--warning); }
+.score-edit .star:hover { color: #facc15; }
+.score-edit .hint { font-size: 11px; color: var(--text-quaternary); }
 
 .detail-meta { margin-bottom: 16px; }
 .detail-meta-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px solid var(--border-subtle); }
 .detail-meta-row .label { color: var(--text-quaternary); }
 .detail-meta-row .value { color: var(--text-secondary); }
 .detail-actions { display: flex; flex-direction: column; gap: 6px; }
-.detail-nav { display: flex; gap: 8px; margin-bottom: 16px; }
-.detail-nav button { flex: 1; padding: 6px; border-radius: var(--radius-md); border: 1px solid var(--border-standard); background: rgba(255,255,255,0.03); color: var(--text-secondary); cursor: pointer; font-size: 13px; }
+.detail-nav { display: flex; gap: 8px; }
+.detail-nav button { flex: 1; padding: 6px; border-radius: var(--radius-md); border: 1px solid var(--border-standard); background: rgba(255,255,255,0.03); color: var(--text-secondary); cursor: pointer; font-size: 13px; font-family: inherit; }
 .detail-nav button:hover { background: rgba(255,255,255,0.06); }
 
-/* ── Empty State ── */
+/* Empty State */
 .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; color: var(--text-quaternary); }
 .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
 .empty-state h3 { font-size: 18px; color: var(--text-tertiary); margin-bottom: 8px; }
 .empty-state p { font-size: 14px; }
 
-/* ── Misc ── */
 .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 510; }
 .badge-green { background: rgba(16,185,129,0.15); color: var(--success); }
-.badge-yellow { background: rgba(234,179,8,0.15); color: #eab308; }
+.badge-yellow { background: rgba(234,179,8,0.15); color: var(--warning); }
 .badge-red { background: rgba(239,68,68,0.15); color: var(--danger); }
 .hidden { display: none !important; }
 
-/* ── Animations ── */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .import-overlay.open, .detail-overlay.open { animation: fadeIn 0.15s ease; }
 
-/* ── Responsive ── */
 @media (max-width: 1200px) { .photo-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 900px) { .sidebar { display: none; } .photo-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 600px) { .photo-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; } .detail-body { flex-direction: column; } .detail-image { max-width: 100%; } .detail-sidebar { width: 100%; } }
+@media (max-width: 900px) { .sidebar { display: none; } .photo-grid { grid-template-columns: repeat(2, 1fr); } .detail-body { flex-direction: column; } .detail-image { max-width: 100%; } .detail-sidebar { width: 100%; } }
+@media (max-width: 600px) { .photo-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; } .filter-bar { flex-wrap: wrap; } }
 </style>
 </head>
 <body>
 
 <div class="app">
-  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="logo">PP</div>
       <h1>PeakPick</h1>
     </div>
     <nav class="sidebar-nav">
-      <div class="nav-item active" onclick="showView('library')">
-        <span class="icon">📷</span> 照片库
-      </div>
-      <div class="nav-item" onclick="showView('import')">
-        <span class="icon">📥</span> 导入照片
+      <div class="nav-item active">
+        <span class="icon">📷</span> 照片库 <span class="badge">84张</span>
       </div>
       <div class="nav-item" onclick="document.getElementById('import-overlay').classList.add('open')">
-        <span class="icon">🗂️</span> 浏览文件夹
+        <span class="icon">📥</span> 导入照片
       </div>
-      <div class="nav-section">筛选条件</div>
-      <div class="date-filter">
-        <label>拍摄日期</label>
-        <div class="date-inputs">
-          <input type="date" value="2026-01-01" id="date-from">
-          <span style="color:var(--text-quaternary);font-size:11px;">至</span>
-          <input type="date" value="2026-05-05" id="date-to">
+      <div class="nav-section">拍摄日期</div>
+      <div class="date-filter" id="date-filter">
+        <label>选择日期范围</label>
+        <div class="date-display" id="date-display">📅 2026-01-01 → 2026-05-05</div>
+        <div class="range-slider-wrap">
+          <div class="range-fill" id="range-fill" style="left:0%;right:0%;"></div>
+          <input type="range" id="range-start" min="0" max="100" value="0" oninput="updateDateRange()">
+          <input type="range" id="range-end" min="0" max="100" value="100" oninput="updateDateRange()">
         </div>
+        <div class="date-timeline" id="date-timeline"></div>
         <div class="date-presets">
-          <span class="date-preset" onclick="setDatePreset(this,'7')">本周</span>
-          <span class="date-preset" onclick="setDatePreset(this,'30')">本月</span>
-          <span class="date-preset active" onclick="setDatePreset(this,'90')">本季度</span>
-          <span class="date-preset" onclick="setDatePreset(this,'365')">今年</span>
-          <span class="date-preset" onclick="setDatePreset(this,'all')">全部</span>
+          <button class="date-preset" onclick="setDatePreset(this,'today')">今天</button>
+          <button class="date-preset" onclick="setDatePreset(this,'3days')">近3天</button>
+          <button class="date-preset active" onclick="setDatePreset(this,'week')">本周</button>
+          <button class="date-preset" onclick="setDatePreset(this,'month')">本月</button>
+          <button class="date-preset" onclick="setDatePreset(this,'all')">全部</button>
         </div>
       </div>
-      <div class="nav-section">评分视图</div>
-      <div class="nav-item" onclick="filterScore('all')">
-        <span class="icon">📊</span> 全部 <span style="margin-left:auto;font-size:11px;color:var(--text-quaternary);">84张</span>
+      <div class="nav-section">评分筛选</div>
+      <div class="nav-item active" onclick="filterScore('all')">
+        <span class="icon">📊</span> 全部 <span class="badge">84张</span>
       </div>
       <div class="nav-item" onclick="filterScore('high')">
-        <span class="icon">⭐</span> 高分 (≥7.0) <span style="margin-left:auto;font-size:11px;color:var(--text-quaternary);">32张</span>
+        <span class="icon">⭐</span> 高分 (≥4.0) <span class="badge" id="high-count">--</span>
       </div>
       <div class="nav-item" onclick="filterScore('medium')">
-        <span class="icon">🔶</span> 中等 (4.0-6.9) <span style="margin-left:auto;font-size:11px;color:var(--text-quaternary);">38张</span>
+        <span class="icon">🔶</span> 中等 (2.5-3.9) <span class="badge" id="med-count">--</span>
       </div>
       <div class="nav-item" onclick="filterScore('low')">
-        <span class="icon">🔴</span> 低分 (&lt;4.0) <span style="margin-left:auto;font-size:11px;color:var(--text-quaternary);">14张</span>
+        <span class="icon">🔴</span> 低分 (&lt;2.5) <span class="badge" id="low-count">--</span>
       </div>
       <div class="nav-section">更多</div>
       <div class="nav-item" onclick="showDismissed()">
-        <span class="icon">🙈</span> 已忽略 <span style="margin-left:auto;font-size:11px;color:var(--text-quaternary);" id="dismissed-count">0张</span>
+        <span class="icon">🙈</span> 已忽略 <span class="badge" id="dismissed-count">0张</span>
+      </div>
+      <div class="nav-item" onclick="showLocked()">
+        <span class="icon">🔒</span> 已锁定 <span class="badge" id="locked-count">0张</span>
       </div>
     </nav>
   </aside>
 
-  <!-- Main -->
   <div class="main">
-    <!-- Header -->
     <div class="header">
       <div class="header-left">
         <h2 id="view-title">照片库</h2>
         <span class="folder-badge">📂 DCIM/2026_Spring</span>
+        <span class="folder-badge" style="background:rgba(234,179,8,0.1);color:var(--warning);border-color:rgba(234,179,8,0.2);">📅 2026-01-01 ~ 2026-05-05</span>
       </div>
       <div class="header-right">
-        <span style="font-size:12px;color:var(--text-quaternary);">ML: CLIP ViT-L (CPU)</span>
+        <span style="font-size:12px;color:var(--text-quaternary);">CLIP ViT-L (CPU)</span>
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-overlay').classList.add('open')">+ 导入</button>
       </div>
     </div>
 
-    <!-- Filter Bar -->
     <div class="filter-bar">
       <input class="search-input" type="text" placeholder="搜索文件名..." oninput="filterPhotos()">
       <div class="score-filter">
         <span>≥</span>
-        <input type="range" min="0" max="10" step="0.5" value="0" oninput="updateThreshold(this.value)">
-        <span id="threshold-label">0.0</span>
+        <input type="range" min="1" max="5" step="0.5" value="1" oninput="updateThreshold(this.value)">
+        <span id="threshold-label">1.0</span>
       </div>
       <div style="flex:1;"></div>
       <span class="filter-chip" onclick="toggleFilter(this,'all')">全部</span>
       <span class="filter-chip active" onclick="toggleFilter(this,'pending')">待处理</span>
-      <span class="filter-chip" onclick="toggleFilter(this='kept')">保留</span>
-      <span class="filter-chip danger" id="dismissed-filter-chip" onclick="toggleDismissedFilter()">已忽略</span>
+      <span class="filter-chip" onclick="toggleFilter(this,'kept')">保留</span>
+      <span class="filter-chip warning" id="dismissed-chip" onclick="toggleDismissedFilter()">已忽略</span>
+      <span class="filter-chip" id="locked-chip" onclick="toggleLockedFilter()">🔒 锁定</span>
     </div>
 
-    <!-- Content -->
     <div class="content" id="main-content">
-      <!-- Empty State (hidden initially) -->
       <div class="empty-state hidden" id="empty-state">
         <div class="icon">📂</div>
-        <h3>打开一个照片文件夹</h3>
-        <p>选择文件夹或拖拽到窗口来开始</p>
-        <button class="btn btn-primary" style="margin-top:16px;" onclick="document.getElementById('import-overlay').classList.add('open')">选择文件夹</button>
+        <h3>没有匹配的照片</h3>
+        <p>尝试调整筛选条件</p>
       </div>
-
-      <!-- Photo Grid -->
       <div class="photo-grid" id="photo-grid"></div>
     </div>
 
-    <!-- Toolbar -->
     <div class="toolbar">
       <div class="toolbar-left">
-        <button class="btn btn-ghost btn-sm" onclick="toggleSelectMode()">☐ 选择</button>
+        <button class="btn btn-ghost btn-sm" onclick="selectAll()">☐ 全选</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearSelection()">☐ 取消</button>
         <div class="sep"></div>
         <span class="count" id="selected-count">已选 0 张</span>
         <div class="sep"></div>
         <button class="btn btn-ghost btn-sm" onclick="batchDismiss()" id="btn-dismiss" disabled>🙈 忽略选中</button>
         <button class="btn btn-ghost btn-sm" onclick="batchKeep()" id="btn-keep" disabled>⭐ 保留选中</button>
-        <button class="btn btn-danger btn-sm" onclick="batchDelete()" id="btn-delete" disabled>🗑️ 删除选中</button>
+        <button class="btn btn-ghost btn-sm" onclick="batchLock()" id="btn-lock" disabled>🔒 锁定选中</button>
+        <div class="sep"></div>
+        <button class="btn btn-primary btn-sm" onclick="selectTop9()">🏆 一键选 9 图</button>
+        <div class="sep"></div>
+        <button class="btn btn-danger btn-sm" onclick="batchDeleteLow()" id="btn-delete-low">🗑️ 删除低于阈值</button>
       </div>
       <div class="toolbar-right">
-        <span id="status-total">84 张</span>
-        <span>·</span>
-        <span id="status-active">84 活跃</span>
-        <span>·</span>
-        <span id="status-dismissed">0 已忽略</span>
-        <span>·</span>
-        <span id="status-avg">均分 5.8</span>
+        <span id="status-total">84 张</span><span>·</span>
+        <span id="status-active">84 活跃</span><span>·</span>
+        <span id="status-dismissed">0 已忽略</span><span>·</span>
+        <span id="status-locked">0 已锁定</span><span>·</span>
+        <span id="status-avg">均分 3.0</span>
       </div>
     </div>
   </div>
@@ -299,70 +309,79 @@ html, body { height: 100%; font-family: 'Inter', system-ui, -apple-system, sans-
 <div class="import-overlay" id="import-overlay">
   <div class="import-dialog">
     <h2>导入照片</h2>
-    <p>选择包含照片的文件夹，可按拍摄日期筛选</p>
-    <div class="import-dropzone" onclick="alert('📂 模拟: 打开文件浏览对话框')">
+    <p>选择包含照片的文件夹</p>
+    <div class="import-dropzone" onclick="simulateFolderScan()">
       <div class="icon">📁</div>
-      <p>拖拽文件夹到这里，或点击浏览</p>
-      <div class="sub">支持 JPEG, RAW, HEIC, PNG</div>
+      <p>点击选择文件夹</p>
+      <div class="sub">JPEG · RAW · HEIC · PNG</div>
     </div>
-    <div class="import-row">
-      <div class="import-field">
-        <label>📅 开始日期</label>
-        <input type="date" value="2026-01-01">
-      </div>
-      <div class="import-field">
-        <label>📅 结束日期</label>
-        <input type="date" value="2026-05-05">
-      </div>
-      <div class="import-field">
-        <label>⚡ 预设</label>
-        <select style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border-standard);border-radius:var(--radius-md);padding:8px;color:var(--text-primary);font-size:13px;font-family:inherit;">
-          <option>今天</option>
-          <option>本周</option>
-          <option selected>本月</option>
-          <option>本季度</option>
-          <option>今年</option>
-          <option>全部</option>
-        </select>
-      </div>
+    <div class="import-summary">
+      <span id="import-count">等待选择文件夹...</span>
+      <span id="import-date-range"></span>
     </div>
     <div class="import-actions">
       <button class="btn btn-ghost" onclick="document.getElementById('import-overlay').classList.remove('open')">取消</button>
-      <button class="btn btn-primary" onclick="simulateImport()">导入 247 张照片</button>
+      <button class="btn btn-primary" id="btn-import-confirm" onclick="confirmImport()" disabled>导入</button>
     </div>
   </div>
 </div>
 
-<!-- Detail View -->
+<!-- Detail Overlay -->
 <div class="detail-overlay" id="detail-overlay">
   <div class="detail-header">
-    <h3 id="detail-filename">DSC_00123.NEF</h3>
-    <button class="detail-close" onclick="document.getElementById('detail-overlay').classList.remove('open')">✕</button>
+    <div class="detail-header-left">
+      <h3 id="detail-filename">DSC_00123.NEF</h3>
+      <span id="detail-lock-badge" class="badge badge-yellow hidden">🔒 已锁定</span>
+    </div>
+    <div class="detail-header-right">
+      <span class="filter-chip" style="font-size:11px;" id="detail-position">1 / 84</span>
+      <button class="detail-close" onclick="closeDetail()">✕</button>
+    </div>
   </div>
   <div class="detail-body" id="detail-body">
-    <div class="detail-nav" style="position:absolute;left:24px;top:50%;transform:translateY(-50%);">
-      <button onclick="navigateDetail(-1)">← 上一张</button>
+    <div style="position:absolute;left:16px;top:50%;transform:translateY(-50%);">
+      <button class="photo-action-btn" style="width:36px;height:36px;font-size:16px;background:rgba(255,255,255,0.08);" onclick="navigateDetail(-1)" title="← 上一张">←</button>
     </div>
-    <div class="detail-nav" style="position:absolute;right:24px;top:50%;transform:translateY(-50%);">
-      <button onclick="navigateDetail(1)">下一张 →</button>
+    <div style="position:absolute;right:16px;top:50%;transform:translateY(-50%);">
+      <button class="photo-action-btn" style="width:36px;height:36px;font-size:16px;background:rgba(255,255,255,0.08);" onclick="navigateDetail(1)" title="→ 下一张">→</button>
     </div>
-    <img class="detail-image" id="detail-image" src="" alt="Photo">
+    <div class="detail-image" id="detail-image"></div>
     <div class="detail-sidebar">
-      <div class="stars" id="detail-stars"></div>
-      <div class="star-label" id="detail-auto-score">AI 评分: <strong>--</strong></div>
+      <!-- Clickable Score Feedback -->
+      <h4>AI 评分 — 点击评分或按 1-5 修改</h4>
+      <div class="score-display" id="score-display" onclick="toggleScoreEdit()">
+        <div>
+          <div class="ai-label">自动评分</div>
+          <div><span class="ai-value" id="detail-ai-score">3.0</span><span class="ai-unit">/5</span></div>
+        </div>
+        <div class="edit-hint">点击修改 →</div>
+      </div>
+      <div class="score-edit" id="score-edit">
+        <span class="star" data-s="1" onclick="setScore(1)">★</span>
+        <span class="star" data-s="2" onclick="setScore(2)">★</span>
+        <span class="star" data-s="3" onclick="setScore(3)">★</span>
+        <span class="star" data-s="4" onclick="setScore(4)">★</span>
+        <span class="star" data-s="5" onclick="setScore(5)">★</span>
+        <span class="hint">按 1-5 键</span>
+      </div>
+
+      <h4>信息</h4>
       <div class="detail-meta">
         <div class="detail-meta-row"><span class="label">文件名</span><span class="value" id="detail-fn">--</span></div>
         <div class="detail-meta-row"><span class="label">拍摄日期</span><span class="value" id="detail-date">--</span></div>
         <div class="detail-meta-row"><span class="label">分辨率</span><span class="value" id="detail-res">--</span></div>
         <div class="detail-meta-row"><span class="label">文件大小</span><span class="value" id="detail-size">--</span></div>
+        <div class="detail-meta-row"><span class="label">状态</span><span class="value" id="detail-status">待处理</span></div>
       </div>
+
+      <h4>操作</h4>
       <div class="detail-actions">
-        <button class="btn btn-primary" onclick="alert('✅ 评分已反馈给模型')">📤 纠正评分 → 反馈模型</button>
-        <button class="btn btn-ghost" onclick="dismissCurrent()">🙈 忽略此照片</button>
-        <button class="btn btn-danger" onclick="alert('🗑️ 已移入回收站')">🗑️ 删除</button>
+        <button class="btn btn-ghost" onclick="toggleLockDetail()" id="detail-lock-btn">🔒 锁定（保护不被删除）</button>
+        <button class="btn btn-ghost" onclick="dismissFromDetail()">🙈 忽略此照片</button>
+        <button class="btn btn-ghost" onclick="keepFromDetail()">⭐ 标记保留</button>
       </div>
-      <p style="margin-top:12px;font-size:11px;color:var(--text-quaternary);">
-        键盘快捷键: ← → 切换 · 1-5 评分 · D 忽略 · Del 删除
+      <p style="margin-top:16px;font-size:11px;color:var(--text-quaternary);line-height:1.6;">
+        ← → 切换 · 1-5 打分 · L 锁定 · D 忽略 · Esc 关闭
       </p>
     </div>
   </div>
@@ -370,35 +389,57 @@ html, body { height: 100%; font-family: 'Inter', system-ui, -apple-system, sans-
 
 <script>
 // ── Mock Data ──
-const mockPhotos = [];
+const photos = [];
 const colors = ['#4a5568','#718096','#a0aec0','#2d3748','#553c9a','#6b46c1','#3182ce','#2b6cb0','#285e61','#234e52','#744210','#9c4221','#702459','#5a2d43'];
-const months = ['2026-01','2026-02','2026-03','2026-04','2026-05'];
+const photoDates = [];
 for (let i = 0; i < 84; i++) {
-  const score = Math.round((Math.random() * 9 + 1) * 10) / 10;
+  const score = Math.round((Math.random() * 3.5 + 1) * 10) / 10; // 1.0 - 4.5 scale
+  const score5 = Math.min(score, 5);
   const status = Math.random() > 0.85 ? 'dismissed' : 'pending';
-  const month = months[Math.floor(Math.random() * months.length)];
-  mockPhotos.push({
+  const locked = Math.random() > 0.92;
+  // Dates spread across 2026-01 to 2026-05
+  const d = new Date(2026, 0, 1);
+  d.setDate(d.getDate() + Math.floor(Math.random() * 125));
+  const dateStr = d.toISOString().slice(0, 10);
+  photoDates.push(d);
+  photos.push({
     id: i, filename: `DSC_${String(10023 + i).padStart(5,'0')}.NEF`,
-    score, status, selected: false,
+    score: score5, status, selected: false, locked,
     color: colors[i % colors.length],
-    date: `${month}-${String(Math.floor(Math.random() * 28) + 1).padStart(2,'0')}`,
+    date: dateStr, dateObj: d,
     res: '6000×4000', size: '24.3 MB',
   });
 }
+photos.sort((a,b) => a.dateObj - b.dateObj); // sort by date
+photos.forEach((p,i) => { p.id = i; });
+
+// Date range
+const dateMin = new Date(2026, 0, 1);
+const dateMax = new Date(2026, 4, 5);
+const dateRangeMs = dateMax - dateMin;
+
 let detailIndex = 0;
-let selectMode = false;
 let currentFilter = 'pending';
-let scoreThreshold = 0;
+let scoreThreshold = 1;
 let showingDismissed = false;
+let showingLocked = false;
 
 // ── Render Grid ──
 function renderGrid() {
   const grid = document.getElementById('photo-grid');
   const empty = document.getElementById('empty-state');
-  let filtered = [...mockPhotos];
 
-  // Filter by status
-  if (showingDismissed) {
+  let filtered = [...photos];
+  // Date filter
+  const sPct = parseFloat(document.getElementById('range-start').value);
+  const ePct = parseFloat(document.getElementById('range-end').value);
+  const dateFrom = new Date(dateMin.getTime() + dateRangeMs * sPct / 100);
+  const dateTo = new Date(dateMin.getTime() + dateRangeMs * ePct / 100);
+  filtered = filtered.filter(p => p.dateObj >= dateFrom && p.dateObj <= dateTo);
+
+  if (showingLocked) {
+    filtered = filtered.filter(p => p.locked);
+  } else if (showingDismissed) {
     filtered = filtered.filter(p => p.status === 'dismissed');
   } else if (currentFilter === 'pending') {
     filtered = filtered.filter(p => p.status === 'pending');
@@ -406,89 +447,120 @@ function renderGrid() {
     filtered = filtered.filter(p => p.status === 'kept');
   }
 
-  // Filter by score
   filtered = filtered.filter(p => p.score >= scoreThreshold);
 
   if (filtered.length === 0) {
-    grid.innerHTML = '';
-    empty.classList.remove('hidden');
-    updateStatus();
-    return;
+    grid.innerHTML = ''; empty.classList.remove('hidden');
+    updateStatus(filtered.length); return;
   }
   empty.classList.add('hidden');
 
   grid.innerHTML = filtered.map(p => {
-    const scoreClass = p.score >= 7 ? 'high' : p.score >= 4 ? 'medium' : 'low';
+    const scoreClass = p.score >= 4 ? 'high' : p.score >= 2.5 ? 'medium' : 'low';
     const checked = p.selected ? 'checked' : '';
-    const dismissed = p.status === 'dismissed' ? 'dismissed' : '';
-    return `<div class="photo-card ${dismissed}" onclick="openDetail(${p.id})" data-id="${p.id}">
-      <div style="width:100%;height:100%;background:${p.color};display:flex;align-items:center;justify-content:center;font-size:24px;color:rgba(255,255,255,0.3);font-weight:700;">${p.filename.split('_')[1]}</div>
+    const dis = p.status === 'dismissed' ? 'dismissed' : '';
+    const lockIcon = p.locked ? '🔒' : '🔓';
+    return `<div class="photo-card ${dis}" onclick="openDetail(${p.id})" data-id="${p.id}">
+      <div style="width:100%;height:100%;background:${p.color};display:flex;align-items:center;justify-content:center;font-size:20px;color:rgba(255,255,255,0.25);font-weight:700;">${p.filename.split('_')[1]}</div>
       <div class="photo-check ${checked}" onclick="event.stopPropagation();toggleSelect(${p.id})">${checked ? '✓' : ''}</div>
-      <button class="photo-dismiss-btn" onclick="event.stopPropagation();quickDismiss(${p.id})" title="忽略">✕</button>
+      <div class="photo-actions">
+        <button class="photo-action-btn ${p.locked ? 'locked' : ''}" onclick="event.stopPropagation();toggleLock(${p.id})" title="${p.locked ? '解锁' : '锁定'}">${lockIcon}</button>
+        <button class="photo-action-btn" onclick="event.stopPropagation();quickDismiss(${p.id})" title="忽略">✕</button>
+      </div>
+      ${p.locked ? '<div class="photo-lock-badge" style="display:flex;">🔒</div>' : ''}
+      ${p.status === 'kept' ? '<div style="position:absolute;top:34px;right:8px;"><span class="badge badge-green">⭐ 保留</span></div>' : ''}
       <div class="photo-overlay">
-        <span class="photo-score ${scoreClass}"><span class="value">${p.score.toFixed(1)}</span></span>
-        ${p.status === 'kept' ? '<span class="badge badge-green">⭐ 保留</span>' : ''}
-        ${p.status === 'dismissed' ? '<span class="badge badge-red">🙈</span>' : ''}
+        <span class="photo-score ${scoreClass}" onclick="event.stopPropagation();quickRate(${p.id})" title="点击修改评分"><span class="value">${p.score.toFixed(1)}</span></span>
       </div>
     </div>`;
   }).join('');
-  updateStatus();
+  updateStatus(filtered.length);
 }
 
-function updateStatus() {
-  const total = mockPhotos.length;
-  const active = mockPhotos.filter(p => p.status === 'pending').length;
-  const dismissed = mockPhotos.filter(p => p.status === 'dismissed').length;
-  const avg = (mockPhotos.reduce((s,p) => s + p.score, 0) / total).toFixed(1);
-  const selected = mockPhotos.filter(p => p.selected).length;
+function updateStatus(visibleCount = null) {
+  const total = photos.length;
+  const active = photos.filter(p => p.status === 'pending').length;
+  const dismissed = photos.filter(p => p.status === 'dismissed').length;
+  const locked = photos.filter(p => p.locked).length;
+  const avg = (photos.reduce((s,p) => s + p.score, 0) / total).toFixed(1);
+  const selected = photos.filter(p => p.selected).length;
 
   document.getElementById('status-total').textContent = `${total} 张`;
   document.getElementById('status-active').textContent = `${active} 活跃`;
   document.getElementById('status-dismissed').textContent = `${dismissed} 已忽略`;
+  document.getElementById('status-locked').textContent = `${locked} 已锁定`;
   document.getElementById('status-avg').textContent = `均分 ${avg}`;
   document.getElementById('selected-count').textContent = `已选 ${selected} 张`;
   document.getElementById('dismissed-count').textContent = `${dismissed}张`;
+  document.getElementById('locked-count').textContent = `${locked}张`;
 
-  // Enable/disable batch buttons
+  // Score counts
+  document.getElementById('high-count').textContent = `${photos.filter(p => p.score >= 4).length}张`;
+  document.getElementById('med-count').textContent = `${photos.filter(p => p.score >= 2.5 && p.score < 4).length}张`;
+  document.getElementById('low-count').textContent = `${photos.filter(p => p.score < 2.5).length}张`;
+
   document.getElementById('btn-dismiss').disabled = selected === 0;
   document.getElementById('btn-keep').disabled = selected === 0;
-  document.getElementById('btn-delete').disabled = selected === 0;
+  document.getElementById('btn-lock').disabled = selected === 0;
 }
 
 // ── Grid Interactions ──
 function toggleSelect(id) {
-  const p = mockPhotos.find(x => x.id === id);
+  const p = photos.find(x => x.id === id);
   if (p) p.selected = !p.selected;
   renderGrid();
 }
 
-function quickDismiss(id) {
-  const p = mockPhotos.find(x => x.id === id);
-  if (p) p.status = 'dismissed';
+function toggleLock(id) {
+  const p = photos.find(x => x.id === id);
+  if (p) p.locked = !p.locked;
   renderGrid();
 }
 
-function toggleSelectMode() {
-  selectMode = !selectMode;
-  mockPhotos.forEach(p => p.selected = true);
+function quickDismiss(id) {
+  const p = photos.find(x => x.id === id);
+  if (p && !p.locked) p.status = 'dismissed';
   renderGrid();
 }
+
+function quickRate(id) {
+  const p = photos.find(x => x.id === id);
+  if (!p) return;
+  const stars = Math.round(p.score);
+  const newScore = stars >= 5 ? 1 : stars + 1;
+  p.score = newScore;
+  renderGrid();
+}
+
+function selectAll() { photos.forEach(p => p.selected = true); renderGrid(); }
+function clearSelection() { photos.forEach(p => p.selected = false); renderGrid(); }
 
 function batchDismiss() {
-  mockPhotos.forEach(p => { if (p.selected) p.status = 'dismissed'; p.selected = false; });
+  photos.forEach(p => { if (p.selected && !p.locked) p.status = 'dismissed'; p.selected = false; });
   renderGrid();
 }
-
 function batchKeep() {
-  mockPhotos.forEach(p => { if (p.selected) p.status = 'kept'; p.selected = false; });
+  photos.forEach(p => { if (p.selected) p.status = 'kept'; p.selected = false; });
+  renderGrid();
+}
+function batchLock() {
+  photos.forEach(p => { if (p.selected) p.locked = !p.locked; p.selected = false; });
   renderGrid();
 }
 
-function batchDelete() {
-  if (!confirm('确定删除选中的照片?')) return;
-  // In real: move to trash
-  const toDelete = mockPhotos.filter(p => p.selected);
-  toDelete.forEach(p => { const i = mockPhotos.indexOf(p); if (i > -1) mockPhotos.splice(i,1); });
+function selectTop9() {
+  const sorted = [...photos].filter(p => p.status !== 'dismissed').sort((a,b) => b.score - a.score);
+  clearSelection();
+  sorted.slice(0, 9).forEach(p => p.selected = true);
+  renderGrid();
+}
+
+function batchDeleteLow() {
+  const threshold = scoreThreshold;
+  const toDelete = photos.filter(p => p.score < threshold && !p.locked && p.status !== 'dismissed');
+  if (toDelete.length === 0) { alert('没有符合删除条件的照片'); return; }
+  if (!confirm(`确定删除所有评分低于 ${threshold} 的照片？（共 ${toDelete.length} 张，已锁定和已忽略的不会删除）`)) return;
+  toDelete.forEach(p => { const i = photos.indexOf(p); if (i > -1) photos.splice(i, 1); });
   renderGrid();
 }
 
@@ -496,29 +568,36 @@ function batchDelete() {
 function toggleFilter(el, mode) {
   document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
-  currentFilter = mode;
-  showingDismissed = false;
-  document.getElementById('dismissed-filter-chip').classList.remove('active');
+  currentFilter = mode; showingDismissed = false; showingLocked = false;
+  document.getElementById('dismissed-chip').classList.remove('active');
+  document.getElementById('locked-chip').classList.remove('active');
   renderGrid();
 }
 
 function toggleDismissedFilter() {
-  showingDismissed = !showingDismissed;
-  document.getElementById('dismissed-filter-chip').classList.toggle('active');
-  if (showingDismissed) {
-    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-    // currentFilter = 'dismissed';
-  } else {
-    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-    document.querySelector('.filter-chip:first-child').classList.add('active');
-    currentFilter = 'all';
-  }
+  showingDismissed = !showingDismissed; showingLocked = false;
+  document.getElementById('dismissed-chip').classList.toggle('active');
+  document.getElementById('locked-chip').classList.remove('active');
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  if (showingDismissed) { document.getElementById('dismissed-chip').classList.add('active'); }
+  else { document.querySelector('.filter-chip').classList.add('active'); currentFilter = 'all'; }
   renderGrid();
 }
 
-function filterScore(level) {
+function toggleLockedFilter() {
+  showingLocked = !showingLocked; showingDismissed = false;
+  document.getElementById('locked-chip').classList.toggle('active');
+  document.getElementById('dismissed-chip').classList.remove('active');
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  if (showingLocked) { document.getElementById('locked-chip').classList.add('active'); }
+  else { document.querySelector('.filter-chip').classList.add('active'); currentFilter = 'all'; }
   renderGrid();
 }
+
+function filterScore(level) { renderGrid(); }
+function filterPhotos() {}
+function showDismissed() { showingDismissed = true; showingLocked = false; document.getElementById('dismissed-chip').classList.add('active'); renderGrid(); }
+function showLocked() { showingLocked = true; showingDismissed = false; document.getElementById('locked-chip').classList.add('active'); renderGrid(); }
 
 function updateThreshold(val) {
   scoreThreshold = parseFloat(val);
@@ -526,95 +605,173 @@ function updateThreshold(val) {
   renderGrid();
 }
 
-function filterPhotos() {
-  // Real implementation would filter by search text
+// ── Date Range ──
+function initDateRange() {
+  const dates = photos.map(p => p.dateObj);
+  const min = new Date(Math.min(...dates));
+  const max = new Date(Math.max(...dates));
+  // Build timeline ticks
+  const timeline = document.getElementById('date-timeline');
+  const months = [];
+  let d = new Date(min);
+  while (d <= max) {
+    months.push(new Date(d));
+    d.setMonth(d.getMonth() + 1);
+  }
+  timeline.innerHTML = months.map(m => {
+    const pct = ((m - min) / (max - min)) * 100;
+    return `<div style="position:absolute;left:${pct}%;top:0;"><div class="date-tick-label">${m.toLocaleDateString('zh-CN',{month:'short'})}</div></div>`;
+  }).join('');
+  updateDateRange();
 }
 
-function showDismissed() {
-  showingDismissed = true;
-  document.getElementById('dismissed-filter-chip').classList.add('active');
+function updateDateRange() {
+  const s = parseFloat(document.getElementById('range-start').value);
+  const e = parseFloat(document.getElementById('range-end').value);
+  if (s > e) {
+    if (this?.id === 'range-start') document.getElementById('range-start').value = e;
+    else document.getElementById('range-end').value = s;
+  }
+  const sFinal = Math.min(parseFloat(document.getElementById('range-start').value), parseFloat(document.getElementById('range-end').value));
+  const eFinal = Math.max(parseFloat(document.getElementById('range-start').value), parseFloat(document.getElementById('range-end').value));
+  document.getElementById('range-start').value = sFinal;
+  document.getElementById('range-end').value = eFinal;
+
+  document.getElementById('range-fill').style.left = sFinal + '%';
+  document.getElementById('range-fill').style.right = (100 - eFinal) + '%';
+
+  const d1 = new Date(dateMin.getTime() + dateRangeMs * sFinal / 100);
+  const d2 = new Date(dateMin.getTime() + dateRangeMs * eFinal / 100);
+  document.getElementById('date-display').textContent = `📅 ${d1.toISOString().slice(0,10)} → ${d2.toISOString().slice(0,10)}`;
   renderGrid();
 }
 
-function setDatePreset(el, days) {
+function setDatePreset(el, mode) {
   document.querySelectorAll('.date-preset').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
-  // In real: update date inputs
-  renderGrid();
-}
-
-function showView(view) {
-  document.querySelectorAll('.nav-item').forEach(c => c.classList.remove('active'));
-  if (view === 'library') {
-    document.querySelector('.nav-item:first-child').classList.add('active');
-    document.getElementById('view-title').textContent = '照片库';
-    renderGrid();
-  } else {
-    document.querySelectorAll('.nav-item')[1].classList.add('active');
-    document.getElementById('view-title').textContent = '导入照片';
-    document.getElementById('photo-grid').innerHTML = '<div class="empty-state"><div class="icon">📥</div><h3>选择导入源</h3><p>插入 USB 设备或选择文件夹</p></div>';
+  const now = new Date(2026, 4, 5);
+  const min = dateMin;
+  let sPct = 0, ePct = 100;
+  if (mode === 'today') {
+    const d = (now - min) / dateRangeMs * 100;
+    sPct = Math.max(0, d - 2); ePct = Math.min(100, d);
+  } else if (mode === '3days') {
+    const d = (now - min) / dateRangeMs * 100;
+    const d3 = (new Date(now.getTime() - 3*24*60*60*1000) - min) / dateRangeMs * 100;
+    sPct = Math.max(0, d3); ePct = Math.min(100, d);
+  } else if (mode === 'week') {
+    const w = (new Date(now.getTime() - 7*24*60*60*1000) - min) / dateRangeMs * 100;
+    sPct = Math.max(0, w); ePct = Math.min(100, d);
+  } else if (mode === 'month') {
+    const m = (new Date(now.getTime() - 30*24*60*60*1000) - min) / dateRangeMs * 100;
+    sPct = Math.max(0, m); ePct = Math.min(100, d);
   }
+  document.getElementById('range-start').value = sPct;
+  document.getElementById('range-end').value = ePct;
+  updateDateRange();
 }
 
 // ── Detail ──
 function openDetail(id) {
-  const p = mockPhotos.find(x => x.id === id);
+  const p = photos.find(x => x.id === id);
   if (!p) return;
-  detailIndex = mockPhotos.indexOf(p);
-  showDetail(detailIndex);
+  detailIndex = photos.indexOf(p);
+  showDetail();
   document.getElementById('detail-overlay').classList.add('open');
 }
 
-function showDetail(idx) {
-  const p = mockPhotos[idx];
+function showDetail() {
+  const p = photos[detailIndex];
   document.getElementById('detail-filename').textContent = p.filename;
+  document.getElementById('detail-position').textContent = `${detailIndex + 1} / ${photos.length}`;
   document.getElementById('detail-fn').textContent = p.filename;
   document.getElementById('detail-date').textContent = p.date;
   document.getElementById('detail-res').textContent = p.res;
   document.getElementById('detail-size').textContent = p.size;
-  document.getElementById('detail-auto-score').innerHTML = `AI 评分: <strong>${p.score.toFixed(1)}</strong> / 10.0`;
-
-  // Stars
-  const starScale = Math.round(p.score / 2); // map 0-10 to 0-5 stars
-  const starsHtml = [1,2,3,4,5].map(s => `<span class="star ${s <= starScale ? 'active' : ''}" onclick="rateDetail(${s})">★</span>`).join('');
-  document.getElementById('detail-stars').innerHTML = starsHtml;
-
-  // Update image (use color placeholder)
-  document.getElementById('detail-image').src = ''; // In real: photo path
+  document.getElementById('detail-status').textContent = p.locked ? '🔒 已锁定' : (p.status === 'pending' ? '待处理' : (p.status === 'kept' ? '⭐ 保留' : '🙈 已忽略'));
+  document.getElementById('detail-ai-score').textContent = p.score.toFixed(1);
+  document.getElementById('detail-lock-badge').classList.toggle('hidden', !p.locked);
+  document.getElementById('detail-lock-btn').textContent = p.locked ? '🔓 解锁' : '🔒 锁定（保护不被删除）';
   document.getElementById('detail-image').style.background = p.color;
   document.getElementById('detail-image').style.width = '400px';
   document.getElementById('detail-image').style.height = '300px';
-  document.getElementById('detail-image').style.borderRadius = '8px';
   document.getElementById('detail-image').style.display = 'flex';
   document.getElementById('detail-image').style.alignItems = 'center';
   document.getElementById('detail-image').style.justifyContent = 'center';
   document.getElementById('detail-image').style.color = 'rgba(255,255,255,0.3)';
-  document.getElementById('detail-image').style.fontSize = '48px';
+  document.getElementById('detail-image').style.fontSize = '36px';
   document.getElementById('detail-image').style.fontWeight = '700';
-  document.getElementById('detail-image').alt = p.filename;
+  document.getElementById('detail-image').textContent = p.filename.split('_')[1];
+  updateScoreStars(p.score);
+  document.getElementById('score-edit').classList.remove('open');
+}
+
+function updateScoreStars(score) {
+  const stars = Math.round(score);
+  document.querySelectorAll('#score-edit .star').forEach(s => {
+    s.classList.toggle('active', parseInt(s.dataset.s) <= stars);
+  });
+}
+
+function toggleScoreEdit() {
+  document.getElementById('score-edit').classList.toggle('open');
+  updateScoreStars(photos[detailIndex].score);
+}
+
+function setScore(val) {
+  const p = photos[detailIndex];
+  p.score = val;
+  showDetail();
+  renderGrid();
+  // Feedback is immediate — no button needed
 }
 
 function navigateDetail(dir) {
   const newIdx = detailIndex + dir;
-  if (newIdx >= 0 && newIdx < mockPhotos.length) {
-    detailIndex = newIdx;
-    showDetail(detailIndex);
-  }
+  if (newIdx >= 0 && newIdx < photos.length) { detailIndex = newIdx; showDetail(); }
 }
 
-function rateDetail(stars) {
-  const p = mockPhotos[detailIndex];
-  p.score = stars * 2; // map 1-5 stars to 0-10
-  showDetail(detailIndex);
+function toggleLockDetail() {
+  const p = photos[detailIndex];
+  if (p) p.locked = !p.locked;
+  showDetail();
   renderGrid();
-  // In real: send feedback to ML backend
 }
 
-function dismissCurrent() {
-  const p = mockPhotos[detailIndex];
-  if (p) p.status = 'dismissed';
+function dismissFromDetail() {
+  const p = photos[detailIndex];
+  if (p && !p.locked) p.status = 'dismissed';
+  closeDetail();
+  renderGrid();
+}
+
+function keepFromDetail() {
+  const p = photos[detailIndex];
+  if (p) p.status = 'kept';
+  closeDetail();
+  renderGrid();
+}
+
+function closeDetail() {
   document.getElementById('detail-overlay').classList.remove('open');
+}
+
+// ── Import Simulation ──
+let importScanned = false;
+function simulateFolderScan() {
+  importScanned = true;
+  document.getElementById('import-count').textContent = '📸 扫描到 247 张照片';
+  document.getElementById('import-date-range').textContent = '📅 2026-01-01 → 2026-05-05';
+  document.getElementById('btn-import-confirm').disabled = false;
+}
+
+function confirmImport() {
+  if (!importScanned) return;
+  document.getElementById('import-overlay').classList.remove('open');
+  document.getElementById('view-title').textContent = '2026 春季旅行';
   renderGrid();
+  initDateRange();
+  alert('✅ 已导入 247 张照片\n📅 日期范围根据照片自动读取\n⚡ AI 评分完成');
 }
 
 // ── Keyboard Shortcuts ──
@@ -622,23 +779,16 @@ document.addEventListener('keydown', (e) => {
   if (document.getElementById('detail-overlay').classList.contains('open')) {
     if (e.key === 'ArrowLeft') { navigateDetail(-1); e.preventDefault(); }
     if (e.key === 'ArrowRight') { navigateDetail(1); e.preventDefault(); }
-    if (e.key === 'Escape') { document.getElementById('detail-overlay').classList.remove('open'); }
-    if (['1','2','3','4','5'].includes(e.key)) { rateDetail(parseInt(e.key)); }
-    if (e.key === 'd' || e.key === 'D') { dismissCurrent(); }
-    if (e.key === 'Delete' || e.key === 'Backspace') { alert('🗑️ 已删除'); }
+    if (e.key === 'Escape') { closeDetail(); }
+    if (['1','2','3','4','5'].includes(e.key)) { setScore(parseInt(e.key)); e.preventDefault(); }
+    if (e.key === 'l' || e.key === 'L') { toggleLockDetail(); e.preventDefault(); }
+    if (e.key === 'd' || e.key === 'D') { dismissFromDetail(); e.preventDefault(); }
   }
 });
 
-// ── Import Simulation ──
-function simulateImport() {
-  document.getElementById('import-overlay').classList.remove('open');
-  document.getElementById('view-title').textContent = '导入: 2026_Spring';
-  renderGrid();
-  alert(`✅ 已导入 247 张照片\n📅 日期范围: 2026-01-01 至 2026-05-05\n⚡ AI 评分完成`);
-}
-
 // ── Init ──
 renderGrid();
+initDateRange();
 </script>
 </body>
 </html>
