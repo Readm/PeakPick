@@ -554,3 +554,154 @@ async def increment_photos_scored(count: int = 1) -> None:
         await db.commit()
     finally:
         await db.close()
+
+
+async def get_all_photo_filepaths() -> list[dict[str, Any]]:
+    """Get all photo IDs and filepaths for hashing.
+
+    Returns:
+        List of dicts with id and filepath keys.
+    """
+    db = await get_db()
+    try:
+        cursor = await db.execute("SELECT id, filepath FROM photos")
+        rows = await cursor.fetchall()
+        return [{"id": r["id"], "filepath": r["filepath"]} for r in rows]
+    finally:
+        await db.close()
+
+
+async def insert_group(
+    member_ids: list[int],
+    description: str,
+) -> int:
+    """Insert a new group with members.
+
+    Args:
+        member_ids: List of photo IDs in the group.
+        description: Human-readable description of the group.
+
+    Returns:
+        Group ID.
+    """
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "INSERT INTO photo_groups (description) VALUES (?)", (description,)
+        )
+        group_id = cursor.lastrowid
+
+        # Find best photo (highest score)
+        best_id = member_ids[0]
+        best_score = -1
+        for mid in member_ids:
+            c = await db.execute("SELECT score FROM photos WHERE id = ?", (mid,))
+            row = await c.fetchone()
+            if row and row["score"] > best_score:
+                best_score = row["score"]
+                best_id = mid
+
+        for mid in member_ids:
+            is_best = 1 if mid == best_id else 0
+            await db.execute(
+                """INSERT INTO photo_group_members
+                   (group_id, photo_id, similarity, is_best)
+                   VALUES (?, ?, ?, ?)""",
+                (group_id, mid, 1.0 if mid == best_id else 0.8, is_best),
+            )
+
+        await db.commit()
+        return group_id
+    finally:
+        await db.close()
+
+
+async def get_groups() -> list[dict[str, Any]]:
+    """Get all photo groups with their members.
+
+    Returns:
+        List of group dicts with group_id, description, members list.
+    """
+    db = await get_db()
+    try:
+        cursor = await db.execute("SELECT * FROM photo_groups ORDER BY id")
+        group_rows = await cursor.fetchall()
+
+        groups = []
+        for gr in group_rows:
+            gid = gr["id"]
+            mc = await db.execute(
+                """SELECT pgm.*, p.score, p.filename
+                   FROM photo_group_members pgm
+                   JOIN photos p ON p.id = pgm.photo_id
+                   WHERE pgm.group_id = ?""",
+                (gid,),
+            )
+            members = await mc.fetchall()
+
+            groups.append({
+                "group_id": gid,
+                "desc": gr["description"],
+                "member_ids": [m["photo_id"] for m in members],
+                "best_id": next((m["photo_id"] for m in members if m["is_best"]), members[0]["photo_id"] if members else None),
+                "best_score": next((m["score"] for m in members if m["is_best"]), None),
+            })
+
+        return groups
+    finally:
+        await db.close()
+
+
+async def get_photo_group(photo_id: int) -> Optional[dict[str, Any]]:
+    """Get group info for a specific photo.
+
+    Args:
+        photo_id: The photo ID.
+
+    Returns:
+        Group dict with group_id, desc, member info, or None if not in a group.
+    """
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            """SELECT pgm.group_id, pg.description, pgm.is_best,
+                      pgm.photo_id, p.score, p.filename
+               FROM photo_group_members pgm
+               JOIN photo_groups pg ON pg.id = pgm.group_id
+               JOIN photos p ON p.id = pgm.photo_id
+               WHERE pgm.group_id IN (
+                   SELECT group_id FROM photo_group_members WHERE photo_id = ?
+               )""",
+            (photo_id,),
+        )
+        rows = await cursor.fetchall()
+        if not rows:
+            return None
+
+        group_id = rows[0]["group_id"]
+        desc = rows[0]["description"]
+        members = [
+            {"photo_id": r["photo_id"], "score": r["score"],
+             "filename": r["filename"], "is_best": bool(r["is_best"])}
+            for r in rows
+        ]
+
+        return {
+            "group_id": group_id,
+            "desc": desc,
+            "group_size": len(members),
+            "members": members,
+        }
+    finally:
+        await db.close()
+
+
+async def clear_groups() -> None:
+    """Clear all groups and group members (recompute)."""
+    db = await get_db()
+    try:
+        await db.execute("DELETE FROM photo_group_members")
+        await db.execute("DELETE FROM photo_groups")
+        await db.commit()
+    finally:
+        await db.close()

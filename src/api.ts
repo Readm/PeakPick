@@ -426,6 +426,18 @@ export function fetchMLStatus(
  * Fetch a photo thumbnail as a base64-encoded string.
  * GET /api/thumbnails/{id}
  */
+
+/**
+ * Fetch the group for a specific photo.
+ * GET /api/photos/{id}/group
+ */
+export function fetchPhotoGroup(
+  id: number,
+  baseUrl: string = DEFAULT_BASE_URL,
+): Promise<ApiResponse<{ group: { group_id: number; desc: string; group_size: number; members: Array<{ photo_id: number; score: number; filename: string; is_best: boolean }> } | null }>> {
+  return request(baseUrl, `/api/photos/${id}/group`, { method: "GET" });
+}
+
 export function fetchThumbnail(
   id: number,
   baseUrl: string = DEFAULT_BASE_URL,
@@ -467,6 +479,7 @@ export const api = {
   fetchScoreDistribution,
   fetchSimilarGroups,
   fetchMLStatus,
+  fetchPhotoGroup,
   fetchThumbnail,
   healthCheck,
   /** The default base URL used by this client */

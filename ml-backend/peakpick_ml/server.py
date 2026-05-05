@@ -16,13 +16,18 @@ from pydantic import BaseModel, Field
 from peakpick_ml import __version__
 from peakpick_ml.db import (
     batch_update_status,
+    clear_groups,
     delete_below_threshold,
+    get_all_photo_filepaths,
+    get_groups,
     get_ml_status,
     get_photo,
+    get_photo_group,
     get_photos,
     get_score_distribution,
     increment_photos_scored,
     init_db,
+    insert_group,
     insert_photos,
     log_feedback,
     toggle_lock,
@@ -32,6 +37,7 @@ from peakpick_ml.db import (
 from peakpick_ml.scanner import extract_metadata, scan_directory
 from peakpick_ml.scorer import score_image
 from peakpick_ml.thumbnails import get_thumbnail
+from peakpick_ml.hasher import compute_phash, find_similar_groups
 
 logger = logging.getLogger(__name__)
 
@@ -169,8 +175,18 @@ async def get_photo_detail(photo_id: int):
 
 @app.get("/api/photos/similar")
 async def get_similar_groups():
-    """Get similar photo groups. Placeholder — returns empty list."""
-    return {"groups": []}
+    """Get all similar photo groups with their members."""
+    groups = await get_groups()
+    return {"groups": groups}
+
+
+@app.get("/api/photos/{photo_id}/group")
+async def get_photo_group_detail(photo_id: int):
+    """Get group info for a specific photo."""
+    group = await get_photo_group(photo_id)
+    if group is None:
+        return {"group": None}
+    return {"group": group}
 
 
 @app.post("/api/photos/import/scan")
@@ -274,11 +290,42 @@ async def import_confirm(request: ConfirmImportRequest):
     except Exception as e:
         logger.warning("Could not log import: %s", e)
 
+    # Compute perceptual hashes and detect similar groups
+    if photos_to_insert:
+        try:
+            await _recompute_groups()
+        except Exception as e:
+            logger.warning("Could not recompute groups: %s", e)
+
     return {
         "imported": imported_count,
         "failed": failed_count,
         "avg_score": avg_score,
     }
+
+
+async def _recompute_groups() -> None:
+    """Recompute all similar photo groups from scratch."""
+    from peakpick_ml.db import clear_groups, get_all_photo_filepaths, insert_group
+
+    await clear_groups()
+    all_photos = await get_all_photo_filepaths()
+
+    # Compute hashes
+    hashes: dict[str, tuple[int, int]] = {}
+    photo_by_path: dict[str, int] = {}
+    for p in all_photos:
+        h = compute_phash(p["filepath"])
+        if h:
+            hashes[p["filepath"]] = h
+            photo_by_path[p["filepath"]] = p["id"]
+
+    # Find groups
+    similar_groups = find_similar_groups(hashes, threshold=10)
+    for group_paths in similar_groups:
+        member_ids = [photo_by_path[fp] for fp in group_paths if fp in photo_by_path]
+        if len(member_ids) >= 2:
+            await insert_group(member_ids, f"相似组 — {len(member_ids)} 张连拍/重复")
 
 
 @app.patch("/api/photos/{photo_id}/score")
