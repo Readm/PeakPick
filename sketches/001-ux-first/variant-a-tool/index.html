@@ -139,9 +139,43 @@ html, body { height: 100%; font-family: 'Inter', system-ui, -apple-system, sans-
 .detail-close { width: 32px; height: 32px; border-radius: var(--radius-md); border: none; background: rgba(255,255,255,0.04); color: var(--text-secondary); cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
 .detail-close:hover { background: rgba(255,255,255,0.08); }
 .detail-body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; gap: 24px; min-height: 0; }
-.detail-image { max-width: 65%; max-height: 80vh; border-radius: var(--radius-lg); object-fit: contain; }
-.detail-sidebar { width: 280px; flex-shrink: 0; }
+.detail-image { flex: 1; max-width: 75%; max-height: 85vh; border-radius: var(--radius-lg); object-fit: contain; min-height: 400px; }
+.detail-sidebar { width: 260px; flex-shrink: 0; max-height: 85vh; overflow-y: auto; }
 .detail-sidebar h4 { font-size: 13px; font-weight: 500; color: var(--text-quaternary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+
+/* Score Distribution */
+.score-dist { margin-bottom: 16px; }
+.score-dist-bar { display: flex; align-items: center; gap: 6px; padding: 2px 0; font-size: 12px; cursor: pointer; border-radius: 3px; transition: background 0.1s; }
+.score-dist-bar:hover { background: rgba(255,255,255,0.04); }
+.score-dist-bar .s-label { width: 14px; color: var(--text-quaternary); text-align: right; flex-shrink: 0; }
+.score-dist-bar .s-bar-wrap { flex: 1; height: 12px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.score-dist-bar .s-bar { height: 100%; border-radius: 3px; transition: width 0.3s ease; min-width: 2px; }
+.score-dist-bar .s-count { width: 28px; color: var(--text-tertiary); text-align: right; flex-shrink: 0; }
+.score-dist-bar .s-bar-5 { background: var(--success); }
+.score-dist-bar .s-bar-4 { background: #22d3ee; }
+.score-dist-bar .s-bar-3 { background: var(--warning); }
+.score-dist-bar .s-bar-2 { background: #fb923c; }
+.score-dist-bar .s-bar-1 { background: var(--danger); }
+.score-dist-bar.active .s-label { color: var(--text-primary); font-weight: 600; }
+.score-dist-bar.active { background: rgba(255,255,255,0.06); }
+
+/* Collapsible Top-5s */
+.collapse-section { margin-bottom: 16px; }
+.collapse-header { display: flex; align-items: center; gap: 6px; padding: 6px 0; cursor: pointer; border-radius: var(--radius-md); transition: background 0.1s; font-size: 12px; color: var(--text-tertiary); }
+.collapse-header:hover { color: var(--text-secondary); }
+.collapse-header .arrow { transition: transform 0.2s; font-size: 10px; }
+.collapse-header .arrow.open { transform: rotate(90deg); }
+.collapse-body { display: none; }
+.collapse-body.open { display: block; }
+.top5-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 6px; }
+.top5-thumb { aspect-ratio: 1; border-radius: 4px; overflow: hidden; cursor: pointer; border: 1px solid transparent; transition: border-color 0.1s; display: flex; align-items: center; justify-content: center; font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 600; }
+.top5-thumb:hover { border-color: var(--accent); }
+
+/* Similar Group */
+.similar-section { margin-bottom: 16px; }
+.similar-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 9999px; font-size: 11px; background: rgba(147,51,234,0.15); color: #c084fc; border: 1px solid rgba(147,51,234,0.2); cursor: pointer; }
+.similar-tag { position: absolute; bottom: 32px; left: 8px; padding: 1px 5px; border-radius: 3px; font-size: 9px; font-weight: 500; background: rgba(147,51,234,0.5); color: #e9d5ff; }
+.grouped-badge { position: absolute; top: 4px; left: 48px; padding: 1px 4px; border-radius: 3px; font-size: 8px; background: rgba(147,51,234,0.4); color: #e9d5ff; }
 
 /* Score in detail - clickable */
 .score-display { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: var(--radius-lg); cursor: pointer; transition: background 0.1s; }
@@ -365,6 +399,31 @@ html, body { height: 100%; font-family: 'Inter', system-ui, -apple-system, sans-
         <span class="hint">按 1-5 键</span>
       </div>
 
+      <!-- Score Distribution -->
+      <div class="score-dist" id="score-dist">
+        <h4>分数分布</h4>
+        <div id="score-dist-bars"></div>
+        <div id="score-dist-group-info" style="font-size:10px;color:var(--text-quaternary);margin-top:4px;"></div>
+      </div>
+
+      <!-- Similar Group Info -->
+      <div class="similar-section" id="similar-section" style="display:none;">
+        <h4>相似图片组</h4>
+        <div id="similar-group-info"></div>
+      </div>
+
+      <!-- Collapsible Top-5s -->
+      <div class="collapse-section" id="top5-section" style="display:none;">
+        <div class="collapse-header" onclick="toggleTop5()">
+          <span class="arrow" id="top5-arrow">▶</span>
+          <span>🏆 5 分照片集</span>
+          <span id="top5-count" style="margin-left:auto;font-size:11px;">0张</span>
+        </div>
+        <div class="collapse-body" id="top5-body">
+          <div class="top5-grid" id="top5-grid"></div>
+        </div>
+      </div>
+
       <h4>信息</h4>
       <div class="detail-meta">
         <div class="detail-meta-row"><span class="label">文件名</span><span class="value" id="detail-fn">--</span></div>
@@ -388,27 +447,143 @@ html, body { height: 100%; font-family: 'Inter', system-ui, -apple-system, sans-
 </div>
 
 <script>
-// ── Mock Data ──
+// ── Score Distribution ──
+function renderScoreDist() {
+  const counts = {1:0,2:0,3:0,4:0,5:0};
+  const activePhotos = photos.filter(p => p.status !== 'dismissed');
+  activePhotos.forEach(p => {
+    const bin = Math.round(p.score);
+    if (counts[bin] !== undefined) counts[bin]++;
+  });
+  const maxCount = Math.max(...Object.values(counts), 1);
+  const allPhotos = activePhotos.length;
+
+  // Group info
+  const grouped = activePhotos.filter(p => p.group);
+  const groupIds = new Set(grouped.map(p => p.group.groupId));
+  const dedupedCount = allPhotos - grouped.length + groupIds.size;
+  document.getElementById('score-dist-group-info').textContent =
+    `📎 ${groupIds.size} 组相似照片 · 去重算作 ${dedupedCount} 张`;
+
+  document.getElementById('score-dist-bars').innerHTML = [5,4,3,2,1].map(score => {
+    const pct = (counts[score] / maxCount) * 100;
+    const active = Math.round(photos[detailIndex].score) === score;
+    return `<div class="score-dist-bar ${active ? 'active' : ''}" onclick="filterToScore(${score})">
+      <span class="s-label">${score}</span>
+      <div class="s-bar-wrap"><div class="s-bar s-bar-${score}" style="width:${pct}%"></div></div>
+      <span class="s-count">${counts[score]}</span>
+    </div>`;
+  }).join('');
+}
+
+function filterToScore(score) {
+  // Switch to 'all' filter and highlight only this score in the grid
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  document.querySelector('.filter-chip').classList.add('active');
+  currentFilter = 'all'; showingDismissed = false; showingLocked = false;
+  scoreThreshold = score;
+  document.getElementById('threshold-label').textContent = score;
+  document.querySelector('.score-filter input').value = score;
+  renderGrid();
+}
+
+// ── Top-5 Collapsible ──
+let top5Open = false;
+function toggleTop5() {
+  top5Open = !top5Open;
+  document.getElementById('top5-body').classList.toggle('open', top5Open);
+  document.getElementById('top5-arrow').classList.toggle('open', top5Open);
+}
+
+function renderTop5() {
+  const fivers = photos.filter(p => p.score >= 5.0 && p.status !== 'dismissed');
+  document.getElementById('top5-section').style.display = fivers.length > 0 ? 'block' : 'none';
+  document.getElementById('top5-count').textContent = `${fivers.length}张`;
+  document.getElementById('top5-grid').innerHTML = fivers.map(p =>
+    `<div class="top5-thumb" onclick="navigateToPhoto(${p.id})" style="background:${p.color};" title="${p.filename}">${p.filename.split('_')[1]}</div>`
+  ).join('');
+}
+
+function navigateToPhoto(id) {
+  const idx = photos.findIndex(p => p.id === id);
+  if (idx >= 0) { detailIndex = idx; showDetail(); }
+}
+
+// ── Similar Group ──
+function renderGroupInfo() {
+  const p = photos[detailIndex];
+  const section = document.getElementById('similar-section');
+  if (!p.group) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+
+  const groupPhotos = photos.filter(x => x.group && x.group.groupId === p.group.groupId);
+  const best = groupPhotos.reduce((a,b) => a.score > b.score ? a : b);
+  const content = document.getElementById('similar-group-info');
+  content.innerHTML = `
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
+      ${p.group.desc}（共 ${p.group.groupSize} 张）
+    </div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;">
+      ${groupPhotos.map(gp => {
+        const isBest = gp.id === best.id;
+        const isCurrent = gp.id === p.id;
+        return `<div onclick="navigateToPhoto(${gp.id})" style="width:40px;height:30px;border-radius:4px;background:${gp.color};cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;color:rgba(255,255,255,0.5);font-weight:600;border:${isCurrent ? '2px solid var(--accent)' : isBest ? '2px solid #c084fc' : '1px solid transparent'};" title="${gp.filename} — ${gp.score.toFixed(1)}分${isBest ? ' (组最佳)' : ''}">${gp.score.toFixed(1)}</div>`;
+      }).join('')}
+    </div>
+    <div style="font-size:10px;color:var(--text-quaternary);margin-top:4px;">
+      🏆 <strong style="color:#c084fc;">组最佳: ${best.filename}</strong> — ${best.score.toFixed(1)}分
+      ${best.id === p.id ? '（当前照片）' : ''}
+    </div>
+  `;
+}
 const photos = [];
 const colors = ['#4a5568','#718096','#a0aec0','#2d3748','#553c9a','#6b46c1','#3182ce','#2b6cb0','#285e61','#234e52','#744210','#9c4221','#702459','#5a2d43'];
 const photoDates = [];
+// Define similar photo groups (index ranges)
+const groupDefs = [
+  { ids: [2,15,27,41], desc: '几乎相同的构图，曝光不同' },
+  { ids: [5,18,33,52,68], desc: '连拍系列，表情差异很小' },
+  { ids: [10,22,38,55], desc: '相同场景，焦距微调' },
+  { ids: [7,20,35,48,60,73], desc: '多张相似，建议选最佳' },
+];
+let groupMap = {}; // photoId -> group info
+let groupIdCounter = 1;
+for (const g of groupDefs) {
+  const gid = groupIdCounter++;
+  g.ids.forEach((pid, idx) => {
+    groupMap[pid] = { groupId: gid, desc: g.desc, groupSize: g.ids.length, index: idx };
+  });
+}
 for (let i = 0; i < 84; i++) {
   const score = Math.round((Math.random() * 3.5 + 1) * 10) / 10; // 1.0 - 4.5 scale
   const score5 = Math.min(score, 5);
-  const status = Math.random() > 0.85 ? 'dismissed' : 'pending';
+  const isDismissed = Math.random() > 0.85;
   const locked = Math.random() > 0.92;
-  // Dates spread across 2026-01 to 2026-05
+  const group = groupMap[i] || null;
   const d = new Date(2026, 0, 1);
   d.setDate(d.getDate() + Math.floor(Math.random() * 125));
-  const dateStr = d.toISOString().slice(0, 10);
   photoDates.push(d);
   photos.push({
     id: i, filename: `DSC_${String(10023 + i).padStart(5,'0')}.NEF`,
-    score: score5, status, selected: false, locked,
+    score: score5, status: isDismissed ? 'dismissed' : 'pending',
+    selected: false, locked, group,
     color: colors[i % colors.length],
-    date: dateStr, dateObj: d,
+    date: d.toISOString().slice(0, 10), dateObj: d,
     res: '6000×4000', size: '24.3 MB',
   });
+}
+// Ensure at least some 5.0 scores
+for (let i = 0; i < 6; i++) {
+  photos[photos.length - 1 - i].score = 5.0;
+  photos[photos.length - 1 - i].status = 'pending';
+}
+// Ensure groups have a highest scorer
+for (const g of groupDefs) {
+  let best = null, bestScore = -1;
+  for (const pid of g.ids) {
+    if (photos[pid].score > bestScore) { bestScore = photos[pid].score; best = pid; }
+  }
+  if (best !== null) groupMap[best].isHighest = true;
 }
 photos.sort((a,b) => a.dateObj - b.dateObj); // sort by date
 photos.forEach((p,i) => { p.id = i; });
@@ -419,7 +594,7 @@ const dateMax = new Date(2026, 4, 5);
 const dateRangeMs = dateMax - dateMin;
 
 let detailIndex = 0;
-let currentFilter = 'pending';
+let currentFilter = 'pending'; // default: hide dismissed
 let scoreThreshold = 1;
 let showingDismissed = false;
 let showingLocked = false;
@@ -468,7 +643,9 @@ function renderGrid() {
         <button class="photo-action-btn" onclick="event.stopPropagation();quickDismiss(${p.id})" title="忽略">✕</button>
       </div>
       ${p.locked ? '<div class="photo-lock-badge" style="display:flex;">🔒</div>' : ''}
-      ${p.status === 'kept' ? '<div style="position:absolute;top:34px;right:8px;"><span class="badge badge-green">⭐ 保留</span></div>' : ''}
+      ${p.group && !p.group.isHighest ? '<div class="grouped-badge">📎 同组</div>' : ''}
+      ${p.group && p.group.isHighest ? '<div class="grouped-badge" style="background:rgba(147,51,234,0.6);color:#fff;">⭐ 组最佳</div>' : ''}
+      ${p.status === 'kept' ? '<div style="position:absolute;top:58px;right:8px;"><span class="badge badge-green">⭐ 保留</span></div>' : ''}
       <div class="photo-overlay">
         <span class="photo-score ${scoreClass}" onclick="event.stopPropagation();quickRate(${p.id})" title="点击修改评分"><span class="value">${p.score.toFixed(1)}</span></span>
       </div>
@@ -704,6 +881,9 @@ function showDetail() {
   document.getElementById('detail-image').textContent = p.filename.split('_')[1];
   updateScoreStars(p.score);
   document.getElementById('score-edit').classList.remove('open');
+  renderScoreDist();
+  renderTop5();
+  renderGroupInfo();
 }
 
 function updateScoreStars(score) {
