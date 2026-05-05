@@ -1,0 +1,11 @@
+{
+  "cycle": "001-ux-first",
+  "variants": [
+    "variant-a-tool",
+    "variant-b-focus"
+  ],
+  "viewports": [
+    "desktop",
+    "tablet"
+  ]
+}
