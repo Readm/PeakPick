@@ -215,7 +215,7 @@ export const usePhotoStore = create<PhotoStore>((set, get) => ({
     const threshold = get().filter.scoreThreshold;
     const result = await apiBatchDelete(threshold);
     if ("error" in result) return;
-    get().loadPhotos();
+    await get().loadPhotos();
   },
 
   setFilter: (partial) =>

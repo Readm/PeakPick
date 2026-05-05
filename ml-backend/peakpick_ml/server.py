@@ -164,6 +164,13 @@ async def list_photos(
     }
 
 
+@app.get("/api/photos/similar")
+async def get_similar_groups():
+    """Get all similar photo groups with their members."""
+    groups = await get_groups()
+    return {"groups": groups}
+
+
 @app.get("/api/photos/{photo_id}")
 async def get_photo_detail(photo_id: int):
     """Get a single photo by ID."""
@@ -171,13 +178,6 @@ async def get_photo_detail(photo_id: int):
     if photo is None:
         _error_response("Photo not found", "PHOTO_NOT_FOUND", 404)
     return photo
-
-
-@app.get("/api/photos/similar")
-async def get_similar_groups():
-    """Get all similar photo groups with their members."""
-    groups = await get_groups()
-    return {"groups": groups}
 
 
 @app.get("/api/photos/{photo_id}/group")

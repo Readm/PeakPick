@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "screenshot": "node scripts/screenshot.mjs",
-    "review": "python3 scripts/review.py"
+    "review": "python3 scripts/review.py",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.4",
